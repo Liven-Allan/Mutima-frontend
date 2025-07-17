@@ -1,0 +1,939 @@
+<!--
+=========================================================
+* Soft UI Dashboard 3 - v1.1.0
+=========================================================
+
+* Product Page: https://www.creative-tim.com/product/soft-ui-dashboard
+* Copyright 2024 Creative Tim (https://www.creative-tim.com)
+* Licensed under MIT (https://www.creative-tim.com/license)
+* Coded by Creative Tim
+
+=========================================================
+
+* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="apple-touch-icon" sizes="76x76" href="../../assets/img/apple-icon.png">
+  <link rel="icon" type="image/png" href="../../assets/img/favicon.png">
+  <title>
+    Customer Requests
+  </title>
+  <!--     Fonts and icons     -->
+  <link href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700,800" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+
+  <!-- Nucleo Icons -->
+  <link href="https://demos.creative-tim.com/soft-ui-dashboard/assets/css/nucleo-icons.css" rel="stylesheet" />
+  <link href="https://demos.creative-tim.com/soft-ui-dashboard/assets/css/nucleo-svg.css" rel="stylesheet" />
+  <!-- CSS Files -->
+  <link id="pagestyle" href="../../assets/css/soft-ui-dashboard.css?v=1.1.0" rel="stylesheet" />
+  <!-- Nepcha Analytics (nepcha.com) -->
+  <!-- Nepcha is a easy-to-use web analytics. No cookies and fully compliant with GDPR, CCPA and PECR. -->
+  <script defer data-site="YOUR_DOMAIN_HERE" src="https://api.nepcha.com/js/nepcha-analytics.js"></script>
+  <style>
+    /* Remove custom arrow button size for consistency with sales.html */
+    .pagination-arrow-btn { all: unset; }
+  </style>
+</head>
+
+<body class="g-sidenav-show  bg-gray-100">
+  <aside class="sidenav navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-3 " id="sidenav-main">
+    <div class="sidenav-header">
+      <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
+      <a class="navbar-brand m-0" href="https://demos.creative-tim.com/soft-ui-dashboard/pages/dashboard.html" target="_blank">
+        <img src="../../assets/img/logo-ct-dark.png" class="navbar-brand-img h-100" alt="main_logo">
+        <span class="ms-1 font-weight-bold">Sales Person Dashboard</span>
+      </a>
+    </div>
+    <hr class="horizontal dark mt-0">
+    <div class="collapse navbar-collapse  w-auto " id="sidenav-collapse-main">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link" href="../salesperson/dashboard.html">
+            <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+              <svg width="12px" height="12px" viewBox="0 0 45 40" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                <title>shop </title>
+                <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                  <g transform="translate(-1716.000000, -439.000000)" fill="#FFFFFF" fill-rule="nonzero">
+                    <g transform="translate(1716.000000, 291.000000)">
+                      <g transform="translate(0.000000, 148.000000)">
+                        <path class="color-background opacity-6" d="M46.7199583,10.7414583 L40.8449583,0.949791667 C40.4909749,0.360605034 39.8540131,0 39.1666667,0 L7.83333333,0 C7.1459869,0 6.50902508,0.360605034 6.15504167,0.949791667 L0.280041667,10.7414583 C0.0969176761,11.0460037 -1.23209662e-05,11.3946378 -1.23209662e-05,11.75 C-0.00758042603,16.0663731 3.48367543,19.5725301 7.80004167,19.5833333 L7.81570833,19.5833333 C9.75003686,19.5882688 11.6168794,18.8726691 13.0522917,17.5760417 C16.0171492,20.2556967 20.5292675,20.2556967 23.494125,17.5760417 C26.4604562,20.2616016 30.9794188,20.2616016 33.94575,17.5760417 C36.2421905,19.6477597 39.5441143,20.1708521 42.3684437,18.9103691 C45.1927731,17.649886 47.0084685,14.8428276 47.0000295,11.75 C47.0000295,11.3946378 46.9030823,11.0460037 46.7199583,10.7414583 Z"></path>
+                        <path class="color-background" d="M39.198,22.4912623 C37.3776246,22.4928106 35.5817531,22.0149171 33.951625,21.0951667 L33.92225,21.1107282 C31.1430221,22.6838032 27.9255001,22.9318916 24.9844167,21.7998837 C24.4750389,21.605469 23.9777983,21.3722567 23.4960833,21.1018359 L23.4745417,21.1129513 C20.6961809,22.6871153 17.4786145,22.9344611 14.5386667,21.7998837 C14.029926,21.6054643 13.533337,21.3722507 13.0522917,21.1018359 C11.4250962,22.0190609 9.63246555,22.4947009 7.81570833,22.4912623 C7.16510551,22.4842162 6.51607673,22.4173045 5.875,22.2911849 L5.875,44.7220845 C5.875,45.9498589 6.7517757,46.9451667 7.83333333,46.9451667 L19.5833333,46.9451667 L19.5833333,33.6066734 L27.4166667,33.6066734 L27.4166667,46.9451667 L39.1666667,46.9451667 C40.2482243,46.9451667 41.125,45.9498589 41.125,44.7220845 L41.125,22.2822926 C40.4887822,22.4116582 39.8442868,22.4815492 39.198,22.4912623 Z"></path>
+                      </g>
+                    </g>
+                  </g>
+                </g>
+              </svg>
+            </div>
+            <span class="nav-link-text ms-1">Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="../salesperson/sales.html">
+            <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="fas fa-chart-line text-dark"></i>
+            </div>
+            <span class="nav-link-text ms-1">Sales</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="../salesperson/credit-management.html">
+            <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="fas fa-credit-card text-dark"></i>
+            </div>
+            <span class="nav-link-text ms-1">Credit Management</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="../salesperson/customer-requests.html">
+            <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="fas fa-user-tag text-dark"></i>
+            </div>
+            <span class="nav-link-text ms-1">Customer Requests</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="../salesperson/expenses_clean.html">
+            <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="fas fa-money-bill-wave text-dark"></i>
+            </div>
+            <span class="nav-link-text ms-1">Expenses</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </aside>
+  <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg ">
+    <!-- Navbar -->
+    <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" navbar-scroll="true">
+      <div class="container-fluid py-1 px-3">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
+            <li class="breadcrumb-item text-sm"><a class="opacity-5 text-dark" href="javascript:;">Pages</a></li>
+            <li class="breadcrumb-item text-sm text-dark active" aria-current="page">Customer Requests</li>
+          </ol>
+          <h6 class="font-weight-bolder mb-0">Customer Requests</h6>
+        </nav>
+        <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
+          <div class="ms-md-auto pe-md-3 d-flex align-items-center">
+            <div class="input-group">
+              <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
+              <input type="text" class="form-control" placeholder="Type here...">
+            </div>
+          </div>
+          <ul class="navbar-nav  justify-content-end">
+            <li class="nav-item d-flex align-items-center">
+              <a href="javascript:;" class="nav-link text-body font-weight-bold px-0">
+                <i class="fa fa-user me-sm-1"></i>
+                <span class="d-sm-inline d-none">Sign In</span>
+              </a>
+            </li>
+            <li class="nav-item d-xl-none ps-3 d-flex align-items-center">
+              <a href="javascript:;" class="nav-link text-body p-0" id="iconNavbarSidenav">
+                <div class="sidenav-toggler-inner">
+                  <i class="sidenav-toggler-line"></i>
+                  <i class="sidenav-toggler-line"></i>
+                  <i class="sidenav-toggler-line"></i>
+                </div>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <!-- End Navbar -->
+    <div class="container-fluid py-4">
+      <!-- Add your dashboard content here -->
+      <div class="row">
+        <div class="col-12">
+          <div class="card mb-4">
+            <div class="card-header pb-0">
+              <h6>Customer Requests Overview</h6>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+              <!-- Add your content here -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Customer Requests Statistics -->
+      <div class="row mt-4">
+        <div class="col-12">
+          <div class="card mb-4">
+            <div class="card-header pb-0">
+              <h4>Customer Requests</h4>
+              <p class="text-sm text-secondary mb-0">Manage and track customer commodity request and their fulfillment status</p>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <!-- Total Requests Card -->
+                <div class="col-lg-4 col-md-6 mb-4">
+                  <div class="card h-100">
+                    <div class="card-body text-center">
+                      <div class="icon icon-shape icon-lg bg-gradient-primary shadow text-center border-radius-lg mb-3">
+                        <i class="fas fa-clipboard-list text-white opacity-10"></i>
+                      </div>
+                      <h5 class="mt-3">Total Requests</h5>
+                      <h2 class="mb-0" id="total-requests">50</h2>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Pending Requests Card -->
+                <div class="col-lg-4 col-md-6 mb-4">
+                  <div class="card h-100">
+                    <div class="card-body text-center">
+                      <div class="icon icon-shape icon-lg bg-gradient-warning shadow text-center border-radius-lg mb-3">
+                        <i class="fas fa-clock text-white opacity-10"></i>
+                      </div>
+                      <h5 class="mt-3">Pending Requests</h5>
+                      <h2 class="mb-0" id="pending-requests">30</h2>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Fulfilled Requests Card -->
+                <div class="col-lg-4 col-md-6 mb-4">
+                  <div class="card h-100">
+                    <div class="card-body text-center">
+                      <div class="icon icon-shape icon-lg bg-gradient-success shadow text-center border-radius-lg mb-3">
+                        <i class="fas fa-check-circle text-white opacity-10"></i>
+                      </div>
+                      <h5 class="mt-3">Fulfilled Requests</h5>
+                      <h2 class="mb-0" id="fulfilled-requests">20</h2>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- All Requests Section -->
+      <div class="row mt-4">
+        <div class="col-12">
+          <div class="card mb-4">
+            <div class="card-header pb-0">
+              <h4>All Requests</h4>
+              <p class="text-sm text-secondary mb-0">View and manage all customer commodity request</p>
+            </div>
+            <div class="card-body">
+              <div class="row mb-4">
+                <div class="col-6">
+                  <button class="btn bg-gradient-primary" data-bs-toggle="modal" data-bs-target="#addNewRequestModal">
+                    <i class="fas fa-plus me-2"></i>Add New Request
+                  </button>
+                </div>
+                <div class="col-6 d-flex justify-content-end">
+                  <div class="input-group input-group-outline me-3" style="width: 250px; height: 45px;">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" placeholder="Search Request" id="searchRequestInput">
+                  </div>
+                  <div class="dropdown">
+                    <button class="btn bg-gradient-secondary dropdown-toggle" type="button" id="statusDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                      Select Status
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="statusDropdown">
+                      <li><a class="dropdown-item" href="#">All</a></li>
+                      <li><a class="dropdown-item" href="#">Pending</a></li>
+                      <li><a class="dropdown-item" href="#">In Progress</a></li>
+                      <li><a class="dropdown-item" href="#">Completed</a></li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <div class="table-responsive p-0">
+                <table class="table align-items-center mb-0">
+                  <thead>
+                    <tr>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Date</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Commodity</th>
+                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Type</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Customer</th>
+                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              <!-- Pagination Controls -->
+              <div class="d-flex justify-content-between align-items-center mt-3">
+                <div>
+                  <span id="requestShowingText" class="text-sm text-secondary">Showing 1 to 4 of 0 requests</span>
+                </div>
+                <div class="d-flex align-items-center">
+                  <button class="btn btn-sm btn-outline-secondary me-2" id="requestPrevPage" title="Previous"><i class="fas fa-chevron-left"></i></button>
+                  <span id="requestCurrentPageInfo" class="badge bg-primary px-3 py-2">Page 1 of 1</span>
+                  <button class="btn btn-sm btn-outline-secondary ms-2" id="requestNextPage" title="Next"><i class="fas fa-chevron-right"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <!-- Core JS Files -->
+  <script src="../../assets/js/core/popper.min.js"></script>
+  <script src="../../assets/js/core/bootstrap.min.js"></script>
+  <script src="../../assets/js/plugins/perfect-scrollbar.min.js"></script>
+  <script src="../../assets/js/plugins/smooth-scrollbar.min.js"></script>
+  <script src="../../assets/js/plugins/chartjs.min.js"></script>
+  <script>
+    var win = navigator.platform.indexOf('Win') > -1;
+    if (win && document.querySelector('#sidenav-scrollbar')) {
+      var options = {
+        damping: '0.5'
+      }
+      Scrollbar.init(document.querySelector('#sidenav-scrollbar'), options);
+    }
+  </script>
+  <!-- Github buttons -->
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+  <!-- Control Center for Soft Dashboard -->
+  <script src="../../assets/js/soft-ui-dashboard.min.js?v=1.1.0"></script>
+  <!-- Create New Commodity Request Modal -->
+  <div class="modal fade" id="addNewRequestModal" tabindex="-1" aria-labelledby="addNewRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addNewRequestModalLabel"><i class="fas fa-plus-circle me-2 text-primary"></i>Create New Commodity Request</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="addRequestForm" autocomplete="off">
+          <div class="modal-body">
+            <!-- Customer Information -->
+            <div class="card mb-4">
+              <div class="card-header pb-2">
+                <h6 class="mb-0"><i class="fas fa-user-circle me-2 text-info"></i>Customer Information</h6>
+              </div>
+              <div class="card-body">
+                <div class="form-group mb-3">
+                  <label class="form-control-label">Customer</label>
+                  <select class="form-control" id="commodityCustomerType">
+                    <option value="">Select customer...</option>
+                    <option value="new">Enter Name</option>
+                  </select>
+                </div>
+                <div id="commodityCustomNameSection" style="display: none;" class="mb-3">
+                  <input type="text" class="form-control mb-2" id="commodityCustomCustomerName" placeholder="Enter customer name">
+                  <input type="text" class="form-control" id="commodityCustomCustomerContact" placeholder="Enter contact (phone or email)">
+                </div>
+              </div>
+            </div>
+
+            <!-- Request Details -->
+            <div class="card">
+              <div class="card-header pb-2">
+                <h6 class="mb-0"><i class="fas fa-box-open me-2 text-success"></i>Request Details</h6>
+              </div>
+              <div class="card-body">
+                <div class="form-group mb-3">
+                  <label for="itemName" class="form-control-label">Item Name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="itemName" name="itemName" placeholder="Enter item name" required>
+                </div>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="form-group mb-3">
+                      <label for="quantity" class="form-control-label">Quantity</label>
+                      <input type="number" class="form-control" id="quantity" name="quantity" placeholder="Enter quantity">
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group mb-3">
+                      <label for="requestType" class="form-control-label">Type</label>
+                      <select class="form-control" id="requestType" name="requestType">
+                        <option value="Weight-Based">Weight-Based</option>
+                        <option value="Unit-Based">Unit-Based</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group mb-3">
+                  <label for="requestDate" class="form-control-label">Request Date</label>
+                  <input type="date" class="form-control" id="requestDate" name="requestDate">
+                </div>
+                <div class="form-group mb-3">
+                  <label for="status" class="form-control-label">Status</label>
+                  <select class="form-control" id="status" name="status">
+                    <option value="pending" selected>Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="fulfilled">Fulfilled</option>
+                    <option value="partially_fulfilled">Partially Fulfilled</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Submit Request</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- Edit Commodity Request Modal -->
+  <div class="modal fade" id="editRequestModal" tabindex="-1" aria-labelledby="editRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editRequestModalLabel"><i class="fas fa-edit me-2 text-warning"></i>Edit Commodity Request</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="editRequestForm" autocomplete="off">
+          <div class="modal-body">
+            <!-- Customer Information -->
+            <div class="card mb-4">
+              <div class="card-header pb-2">
+                <h6 class="mb-0"><i class="fas fa-user-circle me-2 text-info"></i>Customer Information</h6>
+              </div>
+              <div class="card-body">
+                <div class="form-group mb-3">
+                  <label class="form-control-label">Customer</label>
+                  <input type="text" class="form-control" id="editCustomerName" readonly>
+                  <input type="text" class="form-control mt-2" id="editCustomerContact" placeholder="Enter contact (phone or email)">
+                </div>
+              </div>
+            </div>
+            <!-- Request Details -->
+            <div class="card">
+              <div class="card-header pb-2">
+                <h6 class="mb-0"><i class="fas fa-box-open me-2 text-success"></i>Request Details</h6>
+              </div>
+              <div class="card-body">
+                <div class="form-group mb-3">
+                  <label class="form-control-label">Item Name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="editItemName" required>
+                </div>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="form-group mb-3">
+                      <label class="form-control-label">Quantity</label>
+                      <input type="number" class="form-control" id="editQuantity">
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group mb-3">
+                      <label class="form-control-label">Type</label>
+                      <select class="form-control" id="editRequestType">
+                        <option value="Weight-Based">Weight-Based</option>
+                        <option value="Unit-Based">Unit-Based</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group mb-3">
+                  <label class="form-control-label">Request Date</label>
+                  <input type="date" class="form-control" id="editRequestDate">
+                </div>
+                <div class="form-group mb-3">
+                  <label class="form-control-label">Status</label>
+                  <select class="form-control" id="editStatus">
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="fulfilled">Fulfilled</option>
+                    <option value="partially_fulfilled">Partially Fulfilled</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-warning">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- Delete Confirmation Modal -->
+  <div class="modal fade" id="deleteRequestModal" tabindex="-1" aria-labelledby="deleteRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteRequestModalLabel">Delete Commodity Request</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to permanently delete this commodity request? This action cannot be undone.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmDeleteRequestBtn">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Optional: Reset form when modal is closed
+    document.addEventListener('DOMContentLoaded', function () {
+      var addNewRequestModal = document.getElementById('addNewRequestModal');
+      if (addNewRequestModal) {
+        addNewRequestModal.addEventListener('show.bs.modal', async function () {
+          var dateInput = document.getElementById('requestDate');
+          if (dateInput) {
+            var today = new Date();
+            var yyyy = today.getFullYear();
+            var mm = String(today.getMonth() + 1).padStart(2, '0');
+            var dd = String(today.getDate()).padStart(2, '0');
+            dateInput.value = yyyy + '-' + mm + '-' + dd;
+          }
+          // Reset customer type and hide custom name section
+          var customerType = document.getElementById('commodityCustomerType');
+          var customSection = document.getElementById('commodityCustomNameSection');
+          if (customerType && customSection) {
+            customerType.value = '';
+            customSection.style.display = 'none';
+          }
+          // Populate customer dropdown with customers who have made a commodity request
+          try {
+            const res = await fetch('http://localhost:5000/api/commodity-request-customers');
+            if (res.ok) {
+              const customers = await res.json();
+              // Remove all options except the first (Select customer...) and last (Enter Name)
+              while (customerType.options.length > 2) customerType.remove(1);
+              customers.forEach(cust => {
+                const opt = document.createElement('option');
+                opt.value = cust._id;
+                opt.textContent = cust.name + (cust.phone ? ' (' + cust.phone + ')' : '');
+                customerType.insertBefore(opt, customerType.options[customerType.options.length-1]);
+              });
+            }
+          } catch (err) {
+            // Ignore errors, just don't populate
+          }
+        });
+        // Show/hide custom name section based on dropdown
+        var customerType = document.getElementById('commodityCustomerType');
+        if (customerType) {
+          customerType.addEventListener('change', function () {
+            var customSection = document.getElementById('commodityCustomNameSection');
+            if (this.value === 'new') {
+              customSection.style.display = '';
+            } else {
+              customSection.style.display = 'none';
+            }
+          });
+        }
+      }
+
+      // Handle form submission via AJAX
+      var addRequestForm = document.getElementById('addRequestForm');
+      if (addRequestForm) {
+        addRequestForm.addEventListener('submit', async function (e) {
+          e.preventDefault();
+
+          // Gather form data
+          var customerType = document.getElementById('commodityCustomerType').value;
+          var customerName = document.getElementById('commodityCustomCustomerName')?.value.trim();
+          var customerContact = document.getElementById('commodityCustomCustomerContact')?.value.trim();
+          var itemName = document.getElementById('itemName').value.trim();
+          var quantity = document.getElementById('quantity').value;
+          var requestType = document.getElementById('requestType').value;
+          var status = document.getElementById('status').value;
+          var requestDate = document.getElementById('requestDate').value;
+
+          // Validate required fields
+          if (!itemName) {
+            alert('Item Name is required.');
+            return;
+          }
+
+          // Handle customer: for now, always create a new customer inline
+          let customer_id = null;
+          if (customerType === 'new') {
+            if (!customerName) {
+              alert('Customer name is required.');
+              return;
+            }
+            // Try to find existing customer by BOTH name and phone
+            let foundCustomer = null;
+            if (customerContact) {
+              try {
+                // Try to find by phone
+                const searchRes = await fetch(`http://localhost:5000/api/customers?phone=${encodeURIComponent(customerContact)}`);
+                if (searchRes.ok) {
+                  const customersList = await searchRes.json();
+                  if (Array.isArray(customersList) && customersList.length > 0) {
+                    // Check for exact name match as well
+                    foundCustomer = customersList.find(c => c.name && c.name.trim().toLowerCase() === customerName.trim().toLowerCase());
+                  }
+                }
+              } catch (err) {
+                // Ignore and proceed to create
+              }
+            }
+            if (foundCustomer) {
+              customer_id = foundCustomer._id;
+            } else {
+              // Create customer if not found
+              try {
+                const customerRes = await fetch('http://localhost:5000/api/customers', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ name: customerName, phone: customerContact })
+                });
+                const customerData = await customerRes.json();
+                if (!customerRes.ok) throw new Error(customerData.error || 'Failed to create customer');
+                customer_id = customerData.customer._id;
+              } catch (err) {
+                alert('Error creating customer: ' + err.message);
+                return;
+              }
+            }
+          } else if (customerType && customerType !== '') {
+            // Existing customer selected
+            customer_id = customerType;
+          } else {
+            alert('Please select or enter a customer.');
+            return;
+          }
+
+          // Prepare request payload
+          const payload = {
+            commodity_name: itemName,
+            quantity: quantity ? Number(quantity) : undefined,
+            requestType: requestType,
+            status: status,
+            requested_date: requestDate || undefined,
+            customer_id: customer_id,
+            customer_contact: customerContact || undefined
+          };
+
+          // Send to backend
+          try {
+            const res = await fetch('http://localhost:5000/api/commodity-requests', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to submit request');
+            // Success: close modal, reset form, show message
+            var modal = bootstrap.Modal.getInstance(addNewRequestModal);
+            if (modal) modal.hide();
+            addRequestForm.reset();
+            alert('Commodity request submitted successfully!');
+          } catch (err) {
+            alert('Error submitting request: ' + err.message);
+          }
+        });
+      }
+    });
+
+    // Pagination variables for requests
+    let requestCurrentPage = 1;
+    const requestRecordsPerPage = 4;
+    let requestTotalPages = 1;
+    let requestTotalRecords = 0;
+
+    // Fetch and display paginated commodity requests
+    async function loadCommodityRequests(page = 1) {
+      try {
+        const res = await fetch(`http://localhost:5000/api/commodity-requests?page=${page}&limit=${requestRecordsPerPage}`);
+        if (!res.ok) throw new Error('Failed to fetch requests');
+        const data = await res.json();
+        const requests = data.requests;
+        requestTotalRecords = data.total;
+        requestTotalPages = Math.ceil(requestTotalRecords / requestRecordsPerPage);
+        renderRequestsTable(requests);
+        const startIndex = (page - 1) * requestRecordsPerPage + 1;
+        const endIndex = startIndex + requests.length - 1;
+        updateRequestPaginationInfo(startIndex, endIndex, requestTotalRecords);
+        updateRequestPaginationControls();
+      } catch (err) {
+        const tbody = document.querySelector('.table-responsive table tbody');
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Error loading requests</td></tr>`;
+        updateRequestPaginationInfo(0, 0, 0);
+        updateRequestPaginationControls();
+      }
+    }
+    function updateRequestPaginationInfo(start, end, total) {
+      document.getElementById('requestShowingText').innerText = `Showing ${start} to ${end} of ${total} requests`;
+    }
+    function updateRequestPaginationControls() {
+      const prevBtn = document.getElementById('requestPrevPage');
+      const nextBtn = document.getElementById('requestNextPage');
+      const pageInfo = document.getElementById('requestCurrentPageInfo');
+      prevBtn.disabled = requestCurrentPage <= 1;
+      nextBtn.disabled = requestCurrentPage >= requestTotalPages;
+      pageInfo.innerText = `Page ${requestCurrentPage} of ${requestTotalPages}`;
+    }
+    document.getElementById('requestPrevPage').addEventListener('click', function() {
+      if (requestCurrentPage > 1) {
+        requestCurrentPage--;
+        loadCommodityRequests(requestCurrentPage);
+      }
+    });
+    document.getElementById('requestNextPage').addEventListener('click', function() {
+      if (requestCurrentPage < requestTotalPages) {
+        requestCurrentPage++;
+        loadCommodityRequests(requestCurrentPage);
+      }
+    });
+    document.addEventListener('DOMContentLoaded', function () {
+      loadCommodityRequests(requestCurrentPage);
+      loadRequestStatuses();
+    });
+
+    async function loadRequestSummary() {
+      try {
+        const response = await fetch('http://localhost:5000/api/commodity-requests/summary');
+        const summary = await response.json();
+        document.getElementById('total-requests').innerText = summary.total;
+        document.getElementById('pending-requests').innerText = summary.pending;
+        document.getElementById('fulfilled-requests').innerText = summary.fulfilled;
+      } catch (error) {
+        document.getElementById('total-requests').innerText = 'Error';
+        document.getElementById('pending-requests').innerText = 'Error';
+        document.getElementById('fulfilled-requests').innerText = 'Error';
+        console.error('Failed to load request summary:', error);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      loadRequestSummary();
+    });
+
+    // Make the status dropdown scrollable
+    const style = document.createElement('style');
+    style.innerHTML = `.dropdown-menu { max-height: 250px; overflow-y: auto; }`;
+    document.head.appendChild(style);
+
+    // Load all unique statuses for the dropdown
+    async function loadRequestStatuses() {
+      try {
+        const res = await fetch('http://localhost:5000/api/commodity-requests/statuses');
+        const data = await res.json();
+        const statuses = data.statuses || [];
+        const dropdown = document.querySelector('#statusDropdown + .dropdown-menu');
+        dropdown.innerHTML = '<li><a class="dropdown-item" href="#" data-status="">All</a></li>';
+        statuses.forEach(status => {
+          dropdown.innerHTML += `<li><a class="dropdown-item" href="#" data-status="${encodeURIComponent(status)}">${status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}</a></li>`;
+        });
+        dropdown.querySelectorAll('.dropdown-item').forEach(item => {
+          item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const selectedStatus = decodeURIComponent(this.getAttribute('data-status'));
+            document.getElementById('statusDropdown').innerText = selectedStatus ? (selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1).replace('_', ' ')) : 'Select Status';
+            filterRequestsByStatus(selectedStatus);
+          });
+        });
+      } catch (err) {
+        // Ignore errors
+      }
+    }
+
+    // Cache for all requests
+    let allRequestsCache = [];
+    let filteredRequestsCache = [];
+    let selectedStatus = '';
+
+    // Fetch all requests for filtering
+    async function fetchAllRequests() {
+      const res = await fetch('http://localhost:5000/api/commodity-requests?page=1&limit=10000');
+      const data = await res.json();
+      allRequestsCache = data.requests || [];
+    }
+
+    // Filter requests by status and update table
+    async function filterRequestsByStatus(status) {
+      selectedStatus = status;
+      if (!allRequestsCache.length) {
+        await fetchAllRequests();
+      }
+      let filtered = allRequestsCache;
+      if (status) {
+        const matching = allRequestsCache.filter(r => r.status === status);
+        const nonMatching = allRequestsCache.filter(r => r.status !== status);
+        filtered = [...matching, ...nonMatching];
+      }
+      filteredRequestsCache = filtered;
+      requestCurrentPage = 1;
+      renderRequestsTable(filteredRequestsCache.slice(0, requestRecordsPerPage));
+      updateRequestPaginationInfo(filteredRequestsCache.length ? 1 : 0, Math.min(requestRecordsPerPage, filteredRequestsCache.length), filteredRequestsCache.length);
+      requestTotalRecords = filteredRequestsCache.length;
+      requestTotalPages = Math.ceil(requestTotalRecords / requestRecordsPerPage);
+      updateRequestPaginationControls();
+    }
+
+    // Render requests table from filtered cache
+    function renderRequestsTable(requests) {
+      const tbody = document.querySelector('.table-responsive table tbody');
+      tbody.innerHTML = '';
+      if (requests.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">No requests found</td></tr>`;
+        updateRequestPaginationInfo(0, 0, 0);
+        updateRequestPaginationControls();
+        return;
+      }
+      requests.forEach(req => {
+        const date = req.requested_date ? new Date(req.requested_date).toISOString().split('T')[0] : '';
+        const commodity = req.commodity_name || '';
+        const type = req.product_type || req.requestType || '';
+        const customerName = req.customer_id && req.customer_id.name ? req.customer_id.name : '';
+        const customerPhone = req.customer_id && req.customer_id.phone ? req.customer_id.phone : '';
+        const status = req.status || '';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><p class="text-xs font-weight-bold mb-0 ps-3">${date}</p></td>
+          <td><p class="text-xs font-weight-bold mb-0">${commodity}</p></td>
+          <td class="align-middle text-center text-sm">
+            <span class="badge badge-sm bg-gradient-info">${type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+          </td>
+          <td>
+            <div class="d-flex px-2 py-1">
+              <div class="d-flex flex-column justify-content-center">
+                <h6 class="mb-0 text-sm">${customerName}</h6>
+                ${customerPhone ? `<p class="text-xs text-secondary mb-0">${customerPhone}</p>` : ''}
+              </div>
+            </div>
+          </td>
+          <td class="align-middle text-center text-sm">
+            <span class="badge badge-sm bg-gradient-warning">${status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}</span>
+          </td>
+          <td class="align-middle text-center">
+            <button class="btn btn-link text-secondary mb-0 edit-request-btn" data-id="${req._id}">
+              <i class="fa fa-edit text-xs"></i>
+            </button>
+            <button class="btn btn-link text-danger mb-0 delete-request-btn" data-id="${req._id}">
+              <i class="fa fa-trash text-xs"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      // Attach event listeners for edit buttons
+      document.querySelectorAll('.edit-request-btn').forEach(btn => {
+        btn.addEventListener('click', async function() {
+          const id = this.getAttribute('data-id');
+          // Fetch the request details using the new endpoint
+          const res = await fetch(`http://localhost:5000/api/commodity-requests/${id}`);
+          let reqData = null;
+          if (res.ok) {
+            reqData = await res.json();
+          }
+          if (!reqData) return alert('Failed to load request details');
+          document.getElementById('editCustomerName').value = reqData.customer_id && reqData.customer_id.name ? reqData.customer_id.name : '';
+          document.getElementById('editCustomerContact').value = reqData.customer_id && reqData.customer_id.phone ? reqData.customer_id.phone : '';
+          document.getElementById('editItemName').value = reqData.commodity_name || '';
+          document.getElementById('editQuantity').value = reqData.quantity_desired || '';
+          document.getElementById('editRequestType').value = reqData.product_type === 'weight_based' ? 'Weight-Based' : 'Unit-Based';
+          document.getElementById('editRequestDate').value = reqData.requested_date ? new Date(reqData.requested_date).toISOString().split('T')[0] : '';
+          document.getElementById('editStatus').value = reqData.status || 'pending';
+          document.getElementById('editRequestForm').setAttribute('data-id', id);
+          const modal = new bootstrap.Modal(document.getElementById('editRequestModal'));
+          modal.show();
+        });
+      });
+    }
+
+    // Handle Edit Request form submission
+    const editRequestForm = document.getElementById('editRequestForm');
+    if (editRequestForm) {
+      editRequestForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const id = editRequestForm.getAttribute('data-id');
+        const commodity_name = document.getElementById('editItemName').value;
+        const quantity = document.getElementById('editQuantity').value;
+        const requestType = document.getElementById('editRequestType').value;
+        const status = document.getElementById('editStatus').value;
+        const requested_date = document.getElementById('editRequestDate').value;
+        const customer_contact = document.getElementById('editCustomerContact').value;
+        try {
+          const response = await fetch(`http://localhost:5000/api/commodity-requests/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ commodity_name, quantity, requestType, status, requested_date, customer_contact })
+          });
+          const result = await response.json();
+          if (response.ok) {
+            alert('Request updated successfully!');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editRequestModal'));
+            if (modal) modal.hide();
+            loadCommodityRequests(requestCurrentPage);
+          } else {
+            alert('Error: ' + (result.error || 'Unknown error'));
+          }
+        } catch (error) {
+          alert('Network error: ' + error.message);
+        }
+      });
+    }
+
+    // Live search for requests by customer name
+    document.getElementById('searchRequestInput').addEventListener('input', async function (e) {
+      const searchText = e.target.value.trim().toLowerCase();
+      // If allRequestsCache is not fully loaded, fetch all requests
+      if (!allRequestsCache.length) {
+        await fetchAllRequests();
+      }
+      let filtered = allRequestsCache;
+      if (searchText) {
+        filtered = allRequestsCache.filter(req => {
+          const customerName = req.customer_id && req.customer_id.name ? req.customer_id.name.toLowerCase() : '';
+          return customerName.includes(searchText);
+        });
+      }
+      // If a status is also selected, filter further
+      if (selectedStatus) {
+        filtered = filtered.sort((a, b) => {
+          if (a.status === selectedStatus && b.status !== selectedStatus) return -1;
+          if (a.status !== selectedStatus && b.status === selectedStatus) return 1;
+          return 0;
+        });
+      }
+      filteredRequestsCache = filtered;
+      requestCurrentPage = 1;
+      renderRequestsTable(filteredRequestsCache.slice(0, requestRecordsPerPage));
+      updateRequestPaginationInfo(filteredRequestsCache.length ? 1 : 0, Math.min(requestRecordsPerPage, filteredRequestsCache.length), filteredRequestsCache.length);
+      requestTotalRecords = filteredRequestsCache.length;
+      requestTotalPages = Math.ceil(requestTotalRecords / requestRecordsPerPage);
+      updateRequestPaginationControls();
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+      let deleteRequestId = null;
+      document.body.addEventListener('click', function(e) {
+        if (e.target.closest('.delete-request-btn')) {
+          deleteRequestId = e.target.closest('.delete-request-btn').getAttribute('data-id');
+          const modal = new bootstrap.Modal(document.getElementById('deleteRequestModal'));
+          modal.show();
+        }
+      });
+      document.getElementById('confirmDeleteRequestBtn').addEventListener('click', async function() {
+        if (!deleteRequestId) return;
+        try {
+          const response = await fetch(`http://localhost:5000/api/commodity-requests/${deleteRequestId}`, {
+            method: 'DELETE'
+          });
+          const result = await response.json();
+          if (response.ok) {
+            alert('Request deleted successfully!');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteRequestModal'));
+            if (modal) modal.hide();
+            loadCommodityRequests(requestCurrentPage);
+          } else {
+            alert('Error: ' + (result.error || 'Unknown error'));
+          }
+        } catch (error) {
+          alert('Network error: ' + error.message);
+        }
+        deleteRequestId = null;
+      });
+    });
+  </script>
+</body>
+
+</html> 
