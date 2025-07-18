@@ -809,3 +809,113 @@ if (exportPDFBtn) {
     pdf.save(`Financial_Report_${monthLabel.replace(' ', '_')}.pdf`);
   });
 }
+
+// --- Transaction History Modal Logic ---
+const transactionHistoryModal = document.getElementById('transactionHistoryModal');
+if (transactionHistoryModal) {
+  transactionHistoryModal.addEventListener('show.bs.modal', fetchAndRenderTransactionHistory);
+}
+
+// --- Transaction History Pagination Logic ---
+const transactionHistoryPageSize = 4;
+let transactionHistoryCache = [];
+let transactionHistoryCurrentPage = 1;
+let transactionHistoryTotalPages = 1;
+
+function renderTransactionHistoryTablePage(page) {
+  const tbody = document.getElementById('transactionHistoryTableBody');
+  const total = transactionHistoryCache.length;
+  transactionHistoryTotalPages = Math.ceil(total / transactionHistoryPageSize) || 1;
+  const startIdx = (page - 1) * transactionHistoryPageSize;
+  const endIdx = Math.min(startIdx + transactionHistoryPageSize, total);
+  tbody.innerHTML = '';
+  if (total === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No data</td></tr>';
+    updateTransactionHistoryPaginationInfo(0, 0, 0);
+    updateTransactionHistoryPaginationControls();
+    return;
+  }
+  for (let i = startIdx; i < endIdx; i++) {
+    const sale = transactionHistoryCache[i];
+    const itemsStr = (sale.items && sale.items.length)
+      ? sale.items.map(i => `${i.name}${i.quantity ? ` (${i.quantity}${i.unit ? i.unit : ''})` : ''}`).join(', ')
+      : '-';
+    const amount = Number(sale.total) || 0;
+    const paymentMethod = sale.paymentMethodName === 'N/A' ? 'Credit' : sale.paymentMethodName;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><a href="#" class="text-decoration-underline">${sale.customerName || ''}</a></td>
+      <td>${itemsStr}</td>
+      <td><span class="fw-bold text-success">$${amount.toLocaleString()}</span></td>
+      <td>${paymentMethod}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+  updateTransactionHistoryPaginationInfo(startIdx + 1, endIdx, total);
+  updateTransactionHistoryPaginationControls();
+}
+
+function updateTransactionHistoryPaginationInfo(start, end, total) {
+  document.getElementById('transactionHistoryShowingText').textContent = `Showing ${start} to ${end} of ${total} items`;
+}
+
+function updateTransactionHistoryPaginationControls() {
+  document.getElementById('transactionHistoryPrevPage').disabled = transactionHistoryCurrentPage <= 1;
+  document.getElementById('transactionHistoryNextPage').disabled = transactionHistoryCurrentPage >= transactionHistoryTotalPages;
+  document.getElementById('transactionHistoryCurrentPageInfo').textContent = `Page ${transactionHistoryCurrentPage} of ${transactionHistoryTotalPages}`;
+}
+
+function showTransactionHistoryPage(page) {
+  transactionHistoryCurrentPage = page;
+  renderTransactionHistoryTablePage(page);
+}
+
+document.getElementById('transactionHistoryPrevPage').addEventListener('click', function() {
+  if (transactionHistoryCurrentPage > 1) showTransactionHistoryPage(transactionHistoryCurrentPage - 1);
+});
+document.getElementById('transactionHistoryNextPage').addEventListener('click', function() {
+  if (transactionHistoryCurrentPage < transactionHistoryTotalPages) showTransactionHistoryPage(transactionHistoryCurrentPage + 1);
+});
+
+// --- Transaction History Filter Logic ---
+const transactionHistoryDateInput = document.getElementById('transactionHistoryDateInput');
+// Remove Payment Status filter logic for Transaction History
+// Only keep date filter
+let transactionHistorySelectedDate = null;
+
+if (transactionHistoryModal) {
+  transactionHistoryModal.addEventListener('show.bs.modal', () => {
+    fetchAndRenderTransactionHistory();
+  });
+}
+
+if (transactionHistoryDateInput) {
+  transactionHistoryDateInput.addEventListener('change', function() {
+    transactionHistorySelectedDate = this.value || null;
+    fetchAndRenderTransactionHistory();
+  });
+}
+
+// Update fetch to support only date filtering
+async function fetchAndRenderTransactionHistory() {
+  const tbody = document.getElementById('transactionHistoryTableBody');
+  tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Loading...</td></tr>';
+  try {
+    let url = 'http://localhost:5000/api/sales/recent?page=1&limit=100';
+    if (transactionHistorySelectedDate) {
+      url += `&date=${transactionHistorySelectedDate}`;
+    }
+    const res = await fetch(url);
+    const data = await res.json();
+    let sales = data.sales || [];
+    transactionHistoryCache = sales;
+    transactionHistoryCurrentPage = 1;
+    showTransactionHistoryPage(1);
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading data</td></tr>';
+    transactionHistoryCache = [];
+    transactionHistoryCurrentPage = 1;
+    showTransactionHistoryPage(1);
+    console.error('Failed to load transaction history:', err);
+  }
+}

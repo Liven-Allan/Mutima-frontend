@@ -571,25 +571,7 @@
           <form class="row g-2 mb-4 align-items-end">
             <div class="col-md-3">
               <label class="form-label mb-1">Filter By</label>
-              <input type="date" class="form-control form-control-sm">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label mb-1">Customer</label>
-              <select class="form-select form-select-sm">
-                <option value="">All Customers</option>
-                <option>John Doe</option>
-                <option>Jane Smith</option>
-                <option>Robert Johnson</option>
-              </select>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label mb-1">Payment Status</label>
-              <select class="form-select form-select-sm">
-                <option value="">All Statuses</option>
-                <option>Paid</option>
-                <option>Pending</option>
-                <option>Failed</option>
-              </select>
+              <input type="date" class="form-control form-control-sm" id="transactionHistoryDateInput">
             </div>
           </form>
           <!-- Transaction Table -->
@@ -598,36 +580,26 @@
               <thead class="bg-light">
                 <tr>
                   <th class="fw-bold">Customer</th>
-                  <th class="fw-bold">Date/Time</th>
                   <th class="fw-bold">Items</th>
                   <th class="fw-bold">Amount</th>
                   <th class="fw-bold">Payment Method</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td><a href="#" class="text-decoration-underline">John Doe</a></td>
-                  <td>2024-03-10 14:23</td>
-                  <td>Product A, Product B</td>
-                  <td><span class="fw-bold text-success">+$1,200</span></td>
-                  <td>Cash</td>
-                </tr>
-                <tr>
-                  <td><a href="#" class="text-decoration-underline">Jane Smith</a></td>
-                  <td>2024-03-11 09:15</td>
-                  <td>Service X</td>
-                  <td><span class="fw-bold text-danger">-$800</span></td>
-                  <td>Bank Transfer</td>
-                </tr>
-                <tr>
-                  <td><a href="#" class="text-decoration-underline">Robert Johnson</a></td>
-                  <td>2024-03-12 16:40</td>
-                  <td>Product C, Product D</td>
-                  <td><span class="fw-bold text-success">+$2,000</span></td>
-                  <td>Card</td>
-                </tr>
+              <tbody id="transactionHistoryTableBody">
+                <!-- Transaction history rows will be dynamically rendered here -->
               </tbody>
             </table>
+          </div>
+          <!-- Pagination Controls for Transaction History -->
+          <div class="d-flex justify-content-between align-items-center mt-3" id="transactionHistoryPaginationControls">
+            <div>
+              <span id="transactionHistoryShowingText" class="text-sm text-secondary">Showing 1 to 10 of 0 items</span>
+            </div>
+            <div class="d-flex align-items-center">
+              <button class="btn btn-sm btn-outline-secondary me-2" id="transactionHistoryPrevPage" title="Previous"><i class="fas fa-chevron-left"></i></button>
+              <span id="transactionHistoryCurrentPageInfo" class="badge bg-primary px-3 py-2">Page 1 of 1</span>
+              <button class="btn btn-sm btn-outline-secondary ms-2" id="transactionHistoryNextPage" title="Next"><i class="fas fa-chevron-right"></i></button>
+            </div>
           </div>
         </div>
         <div class="modal-footer border-0 justify-content-end">
