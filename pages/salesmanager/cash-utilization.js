@@ -748,3 +748,64 @@ async function renderProfitTrendLineChart() {
 if (financialReportModal) {
   financialReportModal.addEventListener('show.bs.modal', renderProfitTrendLineChart);
 }
+
+// Export PDF for Financial Report
+const exportPDFBtn = document.getElementById('financialReportExportPDF');
+if (exportPDFBtn) {
+  exportPDFBtn.addEventListener('click', async function () {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'pt', 'a4');
+    let y = 40;
+
+    // Title
+    pdf.setFontSize(18);
+    pdf.text('Financial Report', 40, y);
+    y += 30;
+
+    // Month label
+    const monthLabel = document.getElementById('financialReportMonthLabel').textContent;
+    pdf.setFontSize(12);
+    pdf.text(`Month: ${monthLabel}`, 40, y);
+    y += 20;
+
+    // Summary Cards
+    const revenue = document.getElementById('financial-report-total-revenue').textContent;
+    const expenses = document.getElementById('financial-report-total-expenses').textContent;
+    const profit = document.getElementById('financial-report-net-profit').textContent;
+    pdf.setFontSize(14);
+    pdf.text('Summary:', 40, y);
+    y += 20;
+    pdf.setFontSize(12);
+    pdf.text(`Total Revenue: ${revenue}`, 60, y);
+    y += 16;
+    pdf.text(`Total Expenses: ${expenses}`, 60, y);
+    y += 16;
+    pdf.text(`Net Profit: ${profit}`, 60, y);
+    y += 30;
+
+    // Export Pie Chart as image
+    const pieCanvas = document.getElementById('expenseRevenuePieChart');
+    if (pieCanvas) {
+      const pieImg = pieCanvas.toDataURL('image/png', 1.0);
+      pdf.setFontSize(12);
+      pdf.text('Expense vs Revenue vs Profit', 40, y);
+      y += 10;
+      pdf.addImage(pieImg, 'PNG', 40, y, 200, 120);
+      y += 130;
+    }
+
+    // Export Line Chart as image
+    const lineCanvas = document.getElementById('profitTrendLineChart');
+    if (lineCanvas) {
+      const lineImg = lineCanvas.toDataURL('image/png', 1.0);
+      pdf.setFontSize(12);
+      pdf.text('Monthly Profit Trend', 40, y);
+      y += 10;
+      pdf.addImage(lineImg, 'PNG', 40, y, 400, 120);
+      y += 130;
+    }
+
+    // Save the PDF
+    pdf.save(`Financial_Report_${monthLabel.replace(' ', '_')}.pdf`);
+  });
+}
