@@ -186,11 +186,8 @@
                         <i class="fas fa-money-bill-wave text-white opacity-10"></i>
                       </div>
                       <h5 class="mt-3">Total Cash Available</h5>
-                      <h3 class="mb-0">$125,000</h3>
-                      <p class="text-sm text-success mb-0">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>+3.5%</span>
-                      </p>
+                      <h3 class="mb-0" id="total-cash-available-value"></h3>
+                      <button class="btn bg-gradient-primary btn-sm mt-3" data-bs-toggle="modal" data-bs-target="#cashAvailableDetailsModal">View Details</button>
                     </div>
                   </div>
                 </div>
@@ -203,11 +200,8 @@
                         <i class="fas fa-receipt text-white opacity-10"></i>
                       </div>
                       <h5 class="mt-3">Today's Expenses</h5>
-                      <h3 class="mb-0">$8,500</h3>
-                      <p class="text-sm text-danger mb-0">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>+2.1%</span>
-                      </p>
+                      <h3 class="mb-0" id="todays-expenses-value"></h3>
+                      <button class="btn bg-gradient-success btn-sm mt-3" data-bs-toggle="modal" data-bs-target="#expensesDetailsModal">View Expenses</button>
                     </div>
                   </div>
                 </div>
@@ -220,11 +214,9 @@
                         <i class="fas fa-boxes text-white opacity-10"></i>
                       </div>
                       <h5 class="mt-3">Stock Inventory Value</h5>
-                      <h3 class="mb-0">$75,000</h3>
-                      <p class="text-sm text-success mb-0">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>+1.2%</span>
-                      </p>
+                      <h3 class="mb-0" id="stock-inventory-value"></h3>
+                      <span id="stock-inventory-value-change"></span>
+                      <button class="btn bg-gradient-info btn-sm mt-3" data-bs-toggle="modal" data-bs-target="#stockInventoryDetailsModal">View Details</button>
                     </div>
                   </div>
                 </div>
@@ -265,7 +257,7 @@
                   <span class="text-xs ms-2">Cash In</span>
                 </div>
                 <div class="d-flex align-items-center">
-                  <div class="rounded-circle bg-danger" style="width: 10px; height: 10px;"></div>
+                  <div class="rounded-circle bg-warning" style="width: 10px; height: 10px;"></div>
                   <span class="text-xs ms-2">Cash Out</span>
                 </div>
               </div>
@@ -414,63 +406,6 @@
 
   <!-- Add Chart.js initialization scripts -->
   <script>
-    // Cash Flow Chart
-    var ctx = document.getElementById('cash-flow-chart').getContext('2d');
-    var cashFlowChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-        datasets: [{
-          label: 'Cash In',
-          data: [25000, 28000, 32000, 29000, 35000, 30000, 27000],
-          borderColor: 'rgb(40, 167, 69)',
-          tension: 0.4,
-          fill: false
-        },
-        {
-          label: 'Cash Out',
-          data: [18000, 22000, 25000, 21000, 28000, 24000, 20000],
-          borderColor: 'rgb(220, 53, 69)',
-          tension: 0.4,
-          fill: false
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              callback: function(value) {
-                return '$' + value.toLocaleString();
-              }
-            }
-          }
-        },
-        plugins: {
-          legend: {
-            display: false
-          }
-        }
-      }
-    });
-
-    // Button click handlers for date/month range
-    document.getElementById('dateRangeBtn').addEventListener('click', function() {
-      cashFlowChart.data.labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-      cashFlowChart.update();
-      this.classList.add('active');
-      document.getElementById('monthRangeBtn').classList.remove('active');
-    });
-
-    document.getElementById('monthRangeBtn').addEventListener('click', function() {
-      cashFlowChart.data.labels = ['Jan', 'Feb', 'Mar', 'Apr'];
-      cashFlowChart.update();
-      this.classList.add('active');
-      document.getElementById('dateRangeBtn').classList.remove('active');
-    });
-
     // Cash Utilization Ratio Chart
     var ctx = document.getElementById('cash-utilization-chart').getContext('2d');
     new Chart(ctx, {
@@ -552,13 +487,25 @@
           <button type="button" class="btn-close position-absolute end-0 top-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body pt-0">
+          <!-- Add custom month navigation row above summary cards in Financial Report modal -->
+          <div class="row mb-3 align-items-center justify-content-between">
+            <div class="col d-flex align-items-center justify-content-start">
+              <button class="btn btn-sm btn-outline-secondary me-2" id="financialReportMonthPrev"><i class="fas fa-chevron-left"></i></button>
+              <span id="financialReportMonthLabel" class="fw-bold text-md"></span>
+              <button class="btn btn-sm btn-outline-secondary ms-2" id="financialReportMonthNext"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            <div class="col-auto ms-auto">
+              <button class="btn btn-outline-secondary btn-sm me-2" id="financialReportExportPDF"><i class="fas fa-file-pdf me-1"></i> Export PDF</button>
+              <button class="btn btn-outline-secondary btn-sm" id="financialReportExportCSV"><i class="fas fa-file-csv me-1"></i> Export CSV</button>
+            </div>
+          </div>
           <!-- Summary Cards -->
           <div class="row mb-4">
             <div class="col-md-4 mb-2">
               <div class="card shadow-sm border-0">
                 <div class="card-body text-center">
                   <div class="text-secondary mb-1">Total Revenue</div>
-                  <h4 class="fw-bold text-success mb-0">$120,000</h4>
+                  <h4 class="fw-bold text-success mb-0" id="financial-report-total-revenue"></h4>
                 </div>
               </div>
             </div>
@@ -566,7 +513,7 @@
               <div class="card shadow-sm border-0">
                 <div class="card-body text-center">
                   <div class="text-secondary mb-1">Total Expenses</div>
-                  <h4 class="fw-bold text-danger mb-0">$85,000</h4>
+                  <h4 class="fw-bold text-danger mb-0" id="financial-report-total-expenses"></h4>
                 </div>
               </div>
             </div>
@@ -574,81 +521,16 @@
               <div class="card shadow-sm border-0">
                 <div class="card-body text-center">
                   <div class="text-secondary mb-1">Net Profit</div>
-                  <h4 class="fw-bold text-primary mb-0">$35,000</h4>
+                  <h4 class="fw-bold text-primary mb-0" id="financial-report-net-profit"></h4>
                 </div>
               </div>
             </div>
-          </div>
-          <!-- Filters and Export -->
-          <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
-            <label class="mb-0 me-2 text-secondary">Filter by:</label>
-            <input type="month" class="form-control form-control-sm w-auto" value="2024-03" id="reportDateRange">
-            <select class="form-select form-select-sm w-auto" id="reportCategory">
-              <option value="">All Categories</option>
-              <option>Transport</option>
-              <option>Laptops</option>
-              <option>Utilities</option>
-              <option>Office Supplies</option>
-            </select>
-            <select class="form-select form-select-sm w-auto" id="reportPaymentMethod">
-              <option value="">All Payment Methods</option>
-              <option>Cash</option>
-              <option>Card</option>
-              <option>Bank Transfer</option>
-            </select>
-            <button class="btn btn-outline-secondary btn-sm ms-auto"><i class="fas fa-file-pdf me-1"></i> Export PDF</button>
-            <button class="btn btn-outline-secondary btn-sm"><i class="fas fa-file-csv me-1"></i> Export CSV</button>
-          </div>
-          <!-- Interactive Table -->
-          <div class="table-responsive mb-4">
-            <table class="table table-hover align-middle mb-0">
-              <thead class="bg-light">
-                <tr>
-                  <th class="fw-bold">Category</th>
-                  <th class="fw-bold">Amount</th>
-                  <th class="fw-bold">Date</th>
-                  <th class="fw-bold">Payment Method</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Transport</td>
-                  <td><span class="fw-bold text-danger">-$2,000</span></td>
-                  <td>2024-03-10</td>
-                  <td>Cash</td>
-                </tr>
-                <tr>
-                  <td>Laptops</td>
-                  <td><span class="fw-bold text-success">+$8,000</span></td>
-                  <td>2024-03-12</td>
-                  <td>Bank Transfer</td>
-                </tr>
-                <tr>
-                  <td>Utilities</td>
-                  <td><span class="fw-bold text-danger">-$1,200</span></td>
-                  <td>2024-03-15</td>
-                  <td>Card</td>
-                </tr>
-                <tr>
-                  <td>Office Supplies</td>
-                  <td><span class="fw-bold text-danger">-$600</span></td>
-                  <td>2024-03-18</td>
-                  <td>Cash</td>
-                </tr>
-                <tr>
-                  <td>Sales</td>
-                  <td><span class="fw-bold text-success">+$15,000</span></td>
-                  <td>2024-03-20</td>
-                  <td>Card</td>
-                </tr>
-              </tbody>
-            </table>
           </div>
           <!-- Charts Section -->
           <div class="row mb-4">
             <div class="col-md-6 mb-3">
               <div class="card h-100 p-3">
-                <h6 class="fw-bold mb-3"><i class="fas fa-chart-pie me-2 text-primary"></i>Expense vs Revenue</h6>
+                <h6 class="fw-bold mb-3"><i class="fas fa-chart-pie me-2 text-primary"></i>Expense vs Revenue vs Profit</h6>
                 <div style="height: 250px;">
                   <canvas id="expenseRevenuePieChart"></canvas>
                 </div>
@@ -657,8 +539,10 @@
             <div class="col-md-6 mb-3">
               <div class="card h-100 p-3">
                 <h6 class="fw-bold mb-3"><i class="fas fa-chart-line me-2 text-success"></i>Monthly Profit Trend</h6>
-                <div style="height: 250px;">
-                  <canvas id="profitTrendLineChart"></canvas>
+                <div style="height: 250px; overflow-x: auto;">
+                  <div style="width: 1200px; min-width: 600px;">
+                    <canvas id="profitTrendLineChart" width="1200" height="250"></canvas>
+                  </div>
                 </div>
               </div>
             </div>
@@ -670,73 +554,6 @@
       </div>
     </div>
   </div>
-  <!-- Chart.js scripts for modal charts -->
-  <script>
-    // Pie Chart
-    var ctxPie = document.getElementById('expenseRevenuePieChart').getContext('2d');
-    new Chart(ctxPie, {
-      type: 'pie',
-      data: {
-        labels: ['Transport', 'Laptops', 'Utilities', 'Office Supplies', 'Sales'],
-        datasets: [{
-          data: [2000, 8000, 1200, 600, 15000],
-          backgroundColor: [
-            'rgb(220, 53, 69)',
-            'rgb(26, 115, 232)',
-            'rgb(255, 193, 7)',
-            'rgb(23, 162, 184)',
-            'rgb(40, 167, 69)'
-          ],
-          borderWidth: 0
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: true,
-            position: 'bottom'
-          }
-        }
-      }
-    });
-    // Trend Line Chart
-    var ctxLine = document.getElementById('profitTrendLineChart').getContext('2d');
-    new Chart(ctxLine, {
-      type: 'line',
-      data: {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
-        datasets: [{
-          label: 'Net Profit',
-          data: [5000, 12000, 8000, 15000, 10000],
-          borderColor: 'rgb(26, 115, 232)',
-          backgroundColor: 'rgba(26, 115, 232, 0.1)',
-          tension: 0.3,
-          fill: true
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: false
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              callback: function(value) {
-                return '$' + value.toLocaleString();
-              }
-            }
-          }
-        }
-      }
-    });
-  </script>
   <!-- Transaction History Modal -->
   <div class="modal fade" id="transactionHistoryModal" tabindex="-1" aria-labelledby="transactionHistoryModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
@@ -942,95 +759,178 @@
       </div>
     </div>
   </div>
-  <!-- Chart.js scripts for stock analysis modal -->
-  <script>
-    // Bar Chart for Top 5 Items by Stock Value
-    var ctxBar = document.getElementById('topStockValueBarChart').getContext('2d');
-    new Chart(ctxBar, {
-      type: 'bar',
-      data: {
-        labels: ['Product A', 'Product B', 'Product C', 'Product D', 'Product E'],
-        datasets: [{
-          label: 'Stock Value',
-          data: [150, 3000, 560, 1200, 900],
-          backgroundColor: [
-            'rgb(220, 53, 69)',
-            'rgb(26, 115, 232)',
-            'rgb(255, 193, 7)',
-            'rgb(23, 162, 184)',
-            'rgb(40, 167, 69)'
-          ],
-          borderRadius: 5
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: false
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            title: {
-              display: true,
-              text: 'Stock Value ($)'
-            }
-          },
-          x: {
-            title: {
-              display: true,
-              text: 'Items'
-            }
-          }
-        }
-      }
-    });
-    // Line Chart for Stock Movement Trend
-    var ctxMove = document.getElementById('stockMovementLineChart').getContext('2d');
-    new Chart(ctxMove, {
-      type: 'line',
-      data: {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
-        datasets: [{
-          label: 'Stock Inflow',
-          data: [50, 80, 60, 90, 70],
-          borderColor: 'rgb(26, 115, 232)',
-          backgroundColor: 'rgba(26, 115, 232, 0.1)',
-          tension: 0.3,
-          fill: true
-        }, {
-          label: 'Stock Outflow',
-          data: [30, 40, 35, 60, 50],
-          borderColor: 'rgb(220, 53, 69)',
-          backgroundColor: 'rgba(220, 53, 69, 0.1)',
-          tension: 0.3,
-          fill: true
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: true,
-            position: 'bottom'
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            title: {
-              display: true,
-              text: 'Stock Movement'
-            }
-          }
-        }
-      }
-    });
-  </script>
+  <!-- Stock Inventory Details Modal -->
+  <div class="modal fade" id="stockInventoryDetailsModal" tabindex="-1" aria-labelledby="stockInventoryDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="stockInventoryDetailsModalLabel">
+            <i class="fas fa-boxes me-2 text-info"></i>Stock Inventory Details
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Date Selection Area -->
+          <div class="mb-4">
+            <label for="stockInventoryDate" class="form-label"><i class="fas fa-calendar-alt me-2 text-info"></i>Select Date</label>
+            <input type="date" class="form-control w-auto d-inline-block" id="stockInventoryDate" value="">
+          </div>
+          <!-- Inventory Table Section -->
+          <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+            <table class="table align-items-center mb-0">
+              <thead>
+                <tr>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Items</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Quantity</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Total Amount</th>
+                </tr>
+              </thead>
+              <tbody id="stockInventoryDetailsTableBody">
+                <!-- Inventory details will be dynamically added here -->
+              </tbody>
+            </table>
+          </div>
+          <!-- Pagination Controls for Stock Inventory Details -->
+          <div class="d-flex justify-content-between align-items-center mt-3" id="stockInventoryPaginationControls">
+            <div>
+              <span id="stockInventoryShowingText" class="text-sm text-secondary">Showing 1 to 4 of 0 items</span>
+            </div>
+            <div class="d-flex align-items-center">
+              <button class="btn btn-sm btn-outline-secondary me-2" id="stockInventoryPrevPage" title="Previous"><i class="fas fa-chevron-left"></i></button>
+              <span id="stockInventoryCurrentPageInfo" class="badge bg-primary px-3 py-2">Page 1 of 1</span>
+              <button class="btn btn-sm btn-outline-secondary ms-2" id="stockInventoryNextPage" title="Next"><i class="fas fa-chevron-right"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer justify-content-end">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-2"></i>Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Expenses Details Modal -->
+  <div class="modal fade" id="expensesDetailsModal" tabindex="-1" aria-labelledby="expensesDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="expensesDetailsModalLabel">
+            <i class="fas fa-receipt me-2 text-success"></i>Expenses Details
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Date Selection Area -->
+          <div class="mb-4">
+            <label for="expensesDetailsDate" class="form-label"><i class="fas fa-calendar-alt me-2 text-info"></i>Select Date</label>
+            <input type="date" class="form-control w-auto d-inline-block" id="expensesDetailsDate" value="">
+          </div>
+          <!-- Expenses Table Section -->
+          <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+            <table class="table align-items-center mb-0">
+              <thead>
+                <tr>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Purpose</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Amount</th>
+                </tr>
+              </thead>
+              <tbody id="expensesDetailsTableBody">
+                <!-- Expenses details will be dynamically added here -->
+              </tbody>
+            </table>
+          </div>
+          <!-- Pagination Controls for Expenses Details -->
+          <div class="d-flex justify-content-between align-items-center mt-3" id="expensesPaginationControls">
+            <div>
+              <span id="expensesShowingText" class="text-sm text-secondary">Showing 1 to 4 of 0 items</span>
+            </div>
+            <div class="d-flex align-items-center">
+              <button class="btn btn-sm btn-outline-secondary me-2" id="expensesPrevPage" title="Previous"><i class="fas fa-chevron-left"></i></button>
+              <span id="expensesCurrentPageInfo" class="badge bg-primary px-3 py-2">Page 1 of 1</span>
+              <button class="btn btn-sm btn-outline-secondary ms-2" id="expensesNextPage" title="Next"><i class="fas fa-chevron-right"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer justify-content-end">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-2"></i>Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Cash Available Details Modal -->
+  <div class="modal fade" id="cashAvailableDetailsModal" tabindex="-1" aria-labelledby="cashAvailableDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="cashAvailableDetailsModalLabel">
+            <i class="fas fa-money-bill-wave me-2 text-primary"></i>Today's Sales Report
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Date Selection Area -->
+          <div class="mb-4">
+            <label for="cashAvailableDetailsDate" class="form-label"><i class="fas fa-calendar-alt me-2 text-info"></i>Select Date</label>
+            <input type="date" class="form-control w-auto d-inline-block" id="cashAvailableDetailsDate" value="">
+          </div>
+          <!-- Sales Table Section -->
+          <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+            <table class="table align-items-center mb-0">
+              <thead>
+                <tr>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Customer Name</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Items</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Total Amount</th>
+                </tr>
+              </thead>
+              <tbody id="cashAvailableDetailsTableBody">
+                <!-- Sales details will be dynamically added here -->
+              </tbody>
+            </table>
+          </div>
+          <!-- Pagination Controls for Cash Available Details -->
+          <div class="d-flex justify-content-between align-items-center mt-3" id="cashAvailablePaginationControls">
+            <div>
+              <span id="cashAvailableShowingText" class="text-sm text-secondary">Showing 1 to 4 of 0 items</span>
+            </div>
+            <div class="d-flex align-items-center">
+              <button class="btn btn-sm btn-outline-secondary me-2" id="cashAvailablePrevPage" title="Previous"><i class="fas fa-chevron-left"></i></button>
+              <span id="cashAvailableCurrentPageInfo" class="badge bg-primary px-3 py-2">Page 1 of 1</span>
+              <button class="btn btn-sm btn-outline-secondary ms-2" id="cashAvailableNextPage" title="Next"><i class="fas fa-chevron-right"></i></button>
+            </div>
+          </div>
+          <!-- Summary Row for Totals (moved below pagination) -->
+          <div class="row mt-3">
+            <div class="col-md-6 col-lg-5">
+              <div class="card card-body p-3 bg-gray-100">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <div class="fw-bold text-end text-nowrap">Total Sales Amount:</div>
+                  <div id="cashAvailableTotalSales">$0.00</div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <div class="fw-bold text-end text-nowrap">Total Expense Amount:</div>
+                  <div id="cashAvailableTotalExpenses">$0.00</div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="fw-bold text-end text-nowrap">Total Cash Available:</div>
+                  <div id="cashAvailableNetCash">$0.00</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer justify-content-end">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-2"></i>Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="cash-utilization.js"></script>
 </body>
 
 </html> 

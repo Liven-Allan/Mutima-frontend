@@ -1,0 +1,750 @@
+// Fetch and update Stock Inventory Value
+let latestStockInventoryDate = null;
+window.addEventListener('DOMContentLoaded', async () => {
+  const valueElem = document.getElementById('stock-inventory-value');
+  if (!valueElem) return;
+
+  try {
+    // Adjust the URL if your backend is hosted elsewhere
+    const response = await fetch('http://localhost:5000/api/stock-inventory-value');
+    if (!response.ok) throw new Error('Failed to fetch');
+    const data = await response.json();
+    const value = data.totalStockValue || 0;
+    // Format as currency
+    valueElem.textContent = '$' + value.toLocaleString();
+    // Store latest date for modal
+    latestStockInventoryDate = data.latestDate || null;
+  } catch (err) {
+    valueElem.textContent = 'N/A';
+    console.error('Error fetching stock inventory value:', err);
+  }
+});
+
+// Fetch and update Today's Expenses
+window.addEventListener('DOMContentLoaded', async () => {
+  const expensesElem = document.getElementById('todays-expenses-value');
+  if (expensesElem) {
+    try {
+      const response = await fetch('http://localhost:5000/api/todays-expenses');
+      if (!response.ok) throw new Error('Failed to fetch');
+      const data = await response.json();
+      const value = data.totalExpenses || 0;
+      expensesElem.textContent = '$' + value.toLocaleString();
+    } catch (err) {
+      expensesElem.textContent = 'N/A';
+      console.error('Error fetching today\'s expenses:', err);
+    }
+  }
+});
+
+// Fetch and update Total Cash Available minus Today's Expenses
+window.addEventListener('DOMContentLoaded', async () => {
+  const cashElem = document.getElementById('total-cash-available-value');
+  if (cashElem) {
+    try {
+      const [cashRes, expensesRes] = await Promise.all([
+        fetch('http://localhost:5000/api/todays-cash-available'),
+        fetch('http://localhost:5000/api/todays-expenses')
+      ]);
+      if (!cashRes.ok || !expensesRes.ok) throw new Error('Failed to fetch');
+      const cashData = await cashRes.json();
+      const expensesData = await expensesRes.json();
+      const cashValue = cashData.totalCashAvailable || 0;
+      const expensesValue = expensesData.totalExpenses || 0;
+      const netValue = cashValue - expensesValue;
+      cashElem.textContent = '$' + netValue.toLocaleString();
+    } catch (err) {
+      cashElem.textContent = 'N/A';
+      console.error('Error fetching net cash available:', err);
+    }
+  }
+});
+
+// Pagination state for Stock Inventory Details
+let stockInventoryDetailsData = [];
+let stockInventoryCurrentPage = 1;
+const stockInventoryPageSize = 4;
+
+function renderStockInventoryTablePage() {
+  const tbody = document.getElementById('stockInventoryDetailsTableBody');
+  const showingText = document.getElementById('stockInventoryShowingText');
+  const pageInfo = document.getElementById('stockInventoryCurrentPageInfo');
+  const prevBtn = document.getElementById('stockInventoryPrevPage');
+  const nextBtn = document.getElementById('stockInventoryNextPage');
+  const total = stockInventoryDetailsData.length;
+  const totalPages = Math.max(1, Math.ceil(total / stockInventoryPageSize));
+  if (stockInventoryCurrentPage > totalPages) stockInventoryCurrentPage = totalPages;
+  const startIdx = (stockInventoryCurrentPage - 1) * stockInventoryPageSize;
+  const endIdx = Math.min(startIdx + stockInventoryPageSize, total);
+  const pageData = stockInventoryDetailsData.slice(startIdx, endIdx);
+
+  if (total === 0) {
+    tbody.innerHTML = '<tr><td colspan="3">No records found for this date.</td></tr>';
+    showingText.textContent = 'Showing 0 of 0 items';
+    pageInfo.textContent = 'Page 1 of 1';
+    prevBtn.disabled = true;
+    nextBtn.disabled = true;
+    return;
+  }
+
+  tbody.innerHTML = pageData.map(row =>
+    `<tr><td>${row.name}</td><td>${row.quantity.toLocaleString(undefined, {maximumFractionDigits: 2})}</td><td>$${row.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr>`
+  ).join('');
+  showingText.textContent = `Showing ${startIdx + 1} to ${endIdx} of ${total} items`;
+  pageInfo.textContent = `Page ${stockInventoryCurrentPage} of ${totalPages}`;
+  prevBtn.disabled = stockInventoryCurrentPage === 1;
+  nextBtn.disabled = stockInventoryCurrentPage === totalPages;
+}
+
+// Pagination button handlers
+const prevBtn = document.getElementById('stockInventoryPrevPage');
+const nextBtn = document.getElementById('stockInventoryNextPage');
+if (prevBtn) {
+  prevBtn.addEventListener('click', function () {
+    if (stockInventoryCurrentPage > 1) {
+      stockInventoryCurrentPage--;
+      renderStockInventoryTablePage();
+    }
+  });
+}
+if (nextBtn) {
+  nextBtn.addEventListener('click', function () {
+    const totalPages = Math.max(1, Math.ceil(stockInventoryDetailsData.length / stockInventoryPageSize));
+    if (stockInventoryCurrentPage < totalPages) {
+      stockInventoryCurrentPage++;
+      renderStockInventoryTablePage();
+    }
+  });
+}
+
+// Helper to fetch and render inventory details for a date
+async function fetchAndRenderInventoryDetails(dateStr) {
+  const tbody = document.getElementById('stockInventoryDetailsTableBody');
+  const showingText = document.getElementById('stockInventoryShowingText');
+  const pageInfo = document.getElementById('stockInventoryCurrentPageInfo');
+  const prevBtn = document.getElementById('stockInventoryPrevPage');
+  const nextBtn = document.getElementById('stockInventoryNextPage');
+  tbody.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
+  if (showingText) showingText.textContent = '';
+  if (pageInfo) pageInfo.textContent = '';
+  if (prevBtn) prevBtn.disabled = true;
+  if (nextBtn) nextBtn.disabled = true;
+  try {
+    const url = dateStr
+      ? `http://localhost:5000/api/inventory-details?date=${encodeURIComponent(dateStr)}`
+      : 'http://localhost:5000/api/inventory-details';
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Failed to fetch');
+    const data = await response.json();
+    stockInventoryDetailsData = data.details || [];
+    stockInventoryCurrentPage = 1;
+    renderStockInventoryTablePage();
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="3">Error loading data.</td></tr>';
+    if (showingText) showingText.textContent = '';
+    if (pageInfo) pageInfo.textContent = '';
+    if (prevBtn) prevBtn.disabled = true;
+    if (nextBtn) nextBtn.disabled = true;
+    console.error('Error fetching inventory details:', err);
+  }
+}
+
+// Set modal date field to latest date when modal is shown, and fetch details
+const stockInventoryDetailsModal = document.getElementById('stockInventoryDetailsModal');
+if (stockInventoryDetailsModal) {
+  stockInventoryDetailsModal.addEventListener('show.bs.modal', function () {
+    const dateInput = document.getElementById('stockInventoryDate');
+    if (dateInput && latestStockInventoryDate) {
+      dateInput.value = latestStockInventoryDate;
+      fetchAndRenderInventoryDetails(latestStockInventoryDate);
+    }
+  });
+}
+// Fetch details when date changes
+const dateInput = document.getElementById('stockInventoryDate');
+if (dateInput) {
+  dateInput.addEventListener('change', function () {
+    if (dateInput.value) {
+      fetchAndRenderInventoryDetails(dateInput.value);
+    }
+  });
+}
+
+// Expenses Details Modal logic
+let expensesDetailsData = [];
+let expensesCurrentPage = 1;
+const expensesPageSize = 4;
+
+function renderExpensesTablePage() {
+  const tbody = document.getElementById('expensesDetailsTableBody');
+  const showingText = document.getElementById('expensesShowingText');
+  const pageInfo = document.getElementById('expensesCurrentPageInfo');
+  const prevBtn = document.getElementById('expensesPrevPage');
+  const nextBtn = document.getElementById('expensesNextPage');
+  const total = expensesDetailsData.length;
+  const totalPages = Math.max(1, Math.ceil(total / expensesPageSize));
+  if (expensesCurrentPage > totalPages) expensesCurrentPage = totalPages;
+  const startIdx = (expensesCurrentPage - 1) * expensesPageSize;
+  const endIdx = Math.min(startIdx + expensesPageSize, total);
+  const pageData = expensesDetailsData.slice(startIdx, endIdx);
+
+  if (total === 0) {
+    tbody.innerHTML = '<tr><td colspan="2">No records found for this date.</td></tr>';
+    showingText.textContent = 'Showing 0 of 0 items';
+    pageInfo.textContent = 'Page 1 of 1';
+    prevBtn.disabled = true;
+    nextBtn.disabled = true;
+    return;
+  }
+
+  tbody.innerHTML = pageData.map(row =>
+    `<tr><td>${row.purpose}</td><td>$${row.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr>`
+  ).join('');
+  showingText.textContent = `Showing ${startIdx + 1} to ${endIdx} of ${total} items`;
+  pageInfo.textContent = `Page ${expensesCurrentPage} of ${totalPages}`;
+  prevBtn.disabled = expensesCurrentPage === 1;
+  nextBtn.disabled = expensesCurrentPage === totalPages;
+}
+
+// Pagination button handlers for expenses
+const expensesPrevBtn = document.getElementById('expensesPrevPage');
+const expensesNextBtn = document.getElementById('expensesNextPage');
+if (expensesPrevBtn) {
+  expensesPrevBtn.addEventListener('click', function () {
+    if (expensesCurrentPage > 1) {
+      expensesCurrentPage--;
+      renderExpensesTablePage();
+    }
+  });
+}
+if (expensesNextBtn) {
+  expensesNextBtn.addEventListener('click', function () {
+    const totalPages = Math.max(1, Math.ceil(expensesDetailsData.length / expensesPageSize));
+    if (expensesCurrentPage < totalPages) {
+      expensesCurrentPage++;
+      renderExpensesTablePage();
+    }
+  });
+}
+
+// Helper to fetch and render expenses details for a date
+async function fetchAndRenderExpensesDetails(dateStr) {
+  const tbody = document.getElementById('expensesDetailsTableBody');
+  const showingText = document.getElementById('expensesShowingText');
+  const pageInfo = document.getElementById('expensesCurrentPageInfo');
+  const prevBtn = document.getElementById('expensesPrevPage');
+  const nextBtn = document.getElementById('expensesNextPage');
+  tbody.innerHTML = '<tr><td colspan="2">Loading...</td></tr>';
+  if (showingText) showingText.textContent = '';
+  if (pageInfo) pageInfo.textContent = '';
+  if (prevBtn) prevBtn.disabled = true;
+  if (nextBtn) nextBtn.disabled = true;
+  try {
+    const url = dateStr
+      ? `http://localhost:5000/api/expenses-details?date=${encodeURIComponent(dateStr)}`
+      : 'http://localhost:5000/api/expenses-details';
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Failed to fetch');
+    const data = await response.json();
+    expensesDetailsData = data.details || [];
+    expensesCurrentPage = 1;
+    renderExpensesTablePage();
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="2">Error loading data.</td></tr>';
+    if (showingText) showingText.textContent = '';
+    if (pageInfo) pageInfo.textContent = '';
+    if (prevBtn) prevBtn.disabled = true;
+    if (nextBtn) nextBtn.disabled = true;
+    console.error('Error fetching expenses details:', err);
+  }
+}
+
+// Set modal date field to today by default and fetch details
+const expensesDetailsModal = document.getElementById('expensesDetailsModal');
+if (expensesDetailsModal) {
+  expensesDetailsModal.addEventListener('show.bs.modal', function () {
+    const dateInput = document.getElementById('expensesDetailsDate');
+    if (dateInput) {
+      // Set to today by default
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      dateInput.value = `${yyyy}-${mm}-${dd}`;
+      fetchAndRenderExpensesDetails(dateInput.value);
+    }
+  });
+}
+// Fetch details when date changes
+const expensesDateInput = document.getElementById('expensesDetailsDate');
+if (expensesDateInput) {
+  expensesDateInput.addEventListener('change', function () {
+    if (expensesDateInput.value) {
+      fetchAndRenderExpensesDetails(expensesDateInput.value);
+    }
+  });
+}
+
+// Cash Available Details Modal logic
+let cashAvailableDetailsData = [];
+let cashAvailableCurrentPage = 1;
+const cashAvailablePageSize = 4;
+
+function renderCashAvailableTablePage() {
+  const tbody = document.getElementById('cashAvailableDetailsTableBody');
+  const showingText = document.getElementById('cashAvailableShowingText');
+  const pageInfo = document.getElementById('cashAvailableCurrentPageInfo');
+  const prevBtn = document.getElementById('cashAvailablePrevPage');
+  const nextBtn = document.getElementById('cashAvailableNextPage');
+  const total = cashAvailableDetailsData.length;
+  const totalPages = Math.max(1, Math.ceil(total / cashAvailablePageSize));
+  if (cashAvailableCurrentPage > totalPages) cashAvailableCurrentPage = totalPages;
+  const startIdx = (cashAvailableCurrentPage - 1) * cashAvailablePageSize;
+  const endIdx = Math.min(startIdx + cashAvailablePageSize, total);
+  const pageData = cashAvailableDetailsData.slice(startIdx, endIdx);
+
+  if (total === 0) {
+    tbody.innerHTML = '<tr><td colspan="3">No records found for this date.</td></tr>';
+    showingText.textContent = 'Showing 0 of 0 items';
+    pageInfo.textContent = 'Page 1 of 1';
+    prevBtn.disabled = true;
+    nextBtn.disabled = true;
+    return;
+  }
+
+  tbody.innerHTML = pageData.map(row =>
+    `<tr><td>${row.customerName}</td><td>${row.items}</td><td>$${row.totalAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr>`
+  ).join('');
+  showingText.textContent = `Showing ${startIdx + 1} to ${endIdx} of ${total} items`;
+  pageInfo.textContent = `Page ${cashAvailableCurrentPage} of ${totalPages}`;
+  prevBtn.disabled = cashAvailableCurrentPage === 1;
+  nextBtn.disabled = cashAvailableCurrentPage === totalPages;
+}
+
+// Pagination button handlers for cash available
+const cashAvailablePrevBtn = document.getElementById('cashAvailablePrevPage');
+const cashAvailableNextBtn = document.getElementById('cashAvailableNextPage');
+if (cashAvailablePrevBtn) {
+  cashAvailablePrevBtn.addEventListener('click', function () {
+    if (cashAvailableCurrentPage > 1) {
+      cashAvailableCurrentPage--;
+      renderCashAvailableTablePage();
+    }
+  });
+}
+if (cashAvailableNextBtn) {
+  cashAvailableNextBtn.addEventListener('click', function () {
+    const totalPages = Math.max(1, Math.ceil(cashAvailableDetailsData.length / cashAvailablePageSize));
+    if (cashAvailableCurrentPage < totalPages) {
+      cashAvailableCurrentPage++;
+      renderCashAvailableTablePage();
+    }
+  });
+}
+
+// Helper to fetch and render cash available details for a date
+async function fetchAndRenderCashAvailableDetails(dateStr) {
+  const tbody = document.getElementById('cashAvailableDetailsTableBody');
+  const showingText = document.getElementById('cashAvailableShowingText');
+  const pageInfo = document.getElementById('cashAvailableCurrentPageInfo');
+  const prevBtn = document.getElementById('cashAvailablePrevPage');
+  const nextBtn = document.getElementById('cashAvailableNextPage');
+  const totalSalesElem = document.getElementById('cashAvailableTotalSales');
+  const totalExpensesElem = document.getElementById('cashAvailableTotalExpenses');
+  const netCashElem = document.getElementById('cashAvailableNetCash');
+  tbody.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
+  if (showingText) showingText.textContent = '';
+  if (pageInfo) pageInfo.textContent = '';
+  if (prevBtn) prevBtn.disabled = true;
+  if (nextBtn) nextBtn.disabled = true;
+  if (totalSalesElem) totalSalesElem.textContent = '$0.00';
+  if (totalExpensesElem) totalExpensesElem.textContent = '$0.00';
+  if (netCashElem) netCashElem.textContent = '$0.00';
+  try {
+    const [salesRes, expensesRes] = await Promise.all([
+      fetch(dateStr ? `http://localhost:5000/api/cash-available-details?date=${encodeURIComponent(dateStr)}` : 'http://localhost:5000/api/cash-available-details'),
+      fetch(dateStr ? `http://localhost:5000/api/expenses-details?date=${encodeURIComponent(dateStr)}` : 'http://localhost:5000/api/expenses-details')
+    ]);
+    if (!salesRes.ok || !expensesRes.ok) throw new Error('Failed to fetch');
+    const salesData = await salesRes.json();
+    const expensesData = await expensesRes.json();
+    cashAvailableDetailsData = salesData.details || [];
+    cashAvailableCurrentPage = 1;
+    renderCashAvailableTablePage();
+    // Calculate totals
+    const totalSales = cashAvailableDetailsData.reduce((sum, row) => sum + (row.totalAmount || 0), 0);
+    const totalExpenses = (expensesData.details || []).reduce((sum, row) => sum + (row.amount || 0), 0);
+    const netCash = totalSales - totalExpenses;
+    if (totalSalesElem) totalSalesElem.textContent = '$' + totalSales.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (totalExpensesElem) totalExpensesElem.textContent = '$' + totalExpenses.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (netCashElem) netCashElem.textContent = '$' + netCash.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="3">Error loading data.</td></tr>';
+    if (showingText) showingText.textContent = '';
+    if (pageInfo) pageInfo.textContent = '';
+    if (prevBtn) prevBtn.disabled = true;
+    if (nextBtn) nextBtn.disabled = true;
+    if (totalSalesElem) totalSalesElem.textContent = 'N/A';
+    if (totalExpensesElem) totalExpensesElem.textContent = 'N/A';
+    if (netCashElem) netCashElem.textContent = 'N/A';
+    console.error('Error fetching cash available details:', err);
+  }
+}
+
+// Set modal date field to today by default and fetch details
+const cashAvailableDetailsModal = document.getElementById('cashAvailableDetailsModal');
+if (cashAvailableDetailsModal) {
+  cashAvailableDetailsModal.addEventListener('show.bs.modal', function () {
+    const dateInput = document.getElementById('cashAvailableDetailsDate');
+    if (dateInput) {
+      // Set to today by default
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      dateInput.value = `${yyyy}-${mm}-${dd}`;
+      fetchAndRenderCashAvailableDetails(dateInput.value);
+    }
+  });
+}
+// Fetch details when date changes
+const cashAvailableDateInput = document.getElementById('cashAvailableDetailsDate');
+if (cashAvailableDateInput) {
+  cashAvailableDateInput.addEventListener('change', function () {
+    if (cashAvailableDateInput.value) {
+      fetchAndRenderCashAvailableDetails(cashAvailableDateInput.value);
+    }
+  });
+}
+
+// Cash Flow Overview Chart (7 days, dynamic)
+let cashFlowChart = null;
+async function renderCashFlowChart() {
+  const ctx = document.getElementById('cash-flow-chart').getContext('2d');
+  try {
+    const response = await fetch('http://localhost:5000/api/cash-flow-overview');
+    if (!response.ok) throw new Error('Failed to fetch');
+    const data = await response.json();
+    const labels = data.labels || [];
+    const cashIn = data.cashIn || [];
+    const cashOut = data.cashOut || [];
+    if (cashFlowChart) cashFlowChart.destroy();
+    cashFlowChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Cash In',
+            data: cashIn,
+            borderColor: 'rgb(40, 167, 69)', // green
+            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+            tension: 0.4,
+            fill: false
+          },
+          {
+            label: 'Cash Out',
+            data: cashOut,
+            borderColor: 'orange',
+            backgroundColor: 'rgba(255, 165, 0, 0.1)',
+            tension: 0.4,
+            fill: false
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return '$' + value.toLocaleString();
+              }
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          }
+        }
+      }
+    });
+  } catch (err) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    console.error('Error fetching cash flow overview:', err);
+  }
+}
+window.addEventListener('DOMContentLoaded', renderCashFlowChart);
+
+// Fetch and update Financial Report Total Revenue (current month)
+async function updateFinancialReportTotalRevenue() {
+  const revenueElem = document.getElementById('financial-report-total-revenue');
+  if (revenueElem) {
+    try {
+      const response = await fetch('http://localhost:5000/api/financial-report/total-revenue');
+      if (!response.ok) throw new Error('Failed to fetch');
+      const data = await response.json();
+      const value = data.totalRevenue || 0;
+      revenueElem.textContent = '$' + value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    } catch (err) {
+      revenueElem.textContent = 'N/A';
+      console.error('Error fetching total revenue:', err);
+    }
+  }
+}
+// Update when modal is shown
+const financialReportModal = document.getElementById('financialReportModal');
+if (financialReportModal) {
+  financialReportModal.addEventListener('show.bs.modal', updateFinancialReportTotalRevenue);
+}
+
+// Fetch and update Financial Report Total Expenses (current month)
+async function updateFinancialReportTotalExpenses() {
+  const expensesElem = document.getElementById('financial-report-total-expenses');
+  if (expensesElem) {
+    try {
+      const response = await fetch('http://localhost:5000/api/financial-report/total-expenses');
+      if (!response.ok) throw new Error('Failed to fetch');
+      const data = await response.json();
+      const value = data.totalExpenses || 0;
+      expensesElem.textContent = '$' + value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    } catch (err) {
+      expensesElem.textContent = 'N/A';
+      console.error('Error fetching total expenses:', err);
+    }
+  }
+}
+// Update when modal is shown
+if (financialReportModal) {
+  financialReportModal.addEventListener('show.bs.modal', updateFinancialReportTotalExpenses);
+}
+
+// Fetch and update Financial Report Net Profit (current month)
+async function updateFinancialReportNetProfit() {
+  const profitElem = document.getElementById('financial-report-net-profit');
+  if (profitElem) {
+    try {
+      const response = await fetch('http://localhost:5000/api/financial-report/net-profit');
+      if (!response.ok) throw new Error('Failed to fetch');
+      const data = await response.json();
+      const value = data.netProfit || 0;
+      profitElem.textContent = '$' + value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    } catch (err) {
+      profitElem.textContent = 'N/A';
+      console.error('Error fetching net profit:', err);
+    }
+  }
+}
+// Update when modal is shown
+if (financialReportModal) {
+  financialReportModal.addEventListener('show.bs.modal', updateFinancialReportNetProfit);
+}
+
+// Utility to get YYYY-MM from input type month value
+function getMonthRange(monthValue) {
+  if (!monthValue) return null;
+  const [year, month] = monthValue.split('-');
+  const start = new Date(Date.UTC(Number(year), Number(month) - 1, 1, 0, 0, 0, 0));
+  // End: last day of month
+  const end = new Date(Date.UTC(Number(year), Number(month), 0, 23, 59, 59, 999));
+  return { start, end };
+}
+
+// Update all financial report cards for a given month (YYYY-MM)
+async function updateFinancialReportCardsForMonth(monthValue) {
+  const revenueElem = document.getElementById('financial-report-total-revenue');
+  const expensesElem = document.getElementById('financial-report-total-expenses');
+  const profitElem = document.getElementById('financial-report-net-profit');
+  if (revenueElem) revenueElem.textContent = '...';
+  if (expensesElem) expensesElem.textContent = '...';
+  if (profitElem) profitElem.textContent = '...';
+  try {
+    const params = monthValue ? `?month=${monthValue}` : '';
+    const [revenueRes, expensesRes, profitRes] = await Promise.all([
+      fetch(`http://localhost:5000/api/financial-report/total-revenue${params}`),
+      fetch(`http://localhost:5000/api/financial-report/total-expenses${params}`),
+      fetch(`http://localhost:5000/api/financial-report/net-profit${params}`)
+    ]);
+    const revenueData = await revenueRes.json();
+    const expensesData = await expensesRes.json();
+    const profitData = await profitRes.json();
+    if (revenueElem) revenueElem.textContent = '$' + (revenueData.totalRevenue || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (expensesElem) expensesElem.textContent = '$' + (expensesData.totalExpenses || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (profitElem) profitElem.textContent = '$' + (profitData.netProfit || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  } catch (err) {
+    if (revenueElem) revenueElem.textContent = 'N/A';
+    if (expensesElem) expensesElem.textContent = 'N/A';
+    if (profitElem) profitElem.textContent = 'N/A';
+    console.error('Error fetching financial report cards:', err);
+  }
+}
+
+// Custom month navigation for Financial Report modal
+let financialReportSelectedMonth = new Date().getMonth();
+let financialReportSelectedYear = new Date().getFullYear();
+
+function updateFinancialReportMonthLabel() {
+  const label = document.getElementById('financialReportMonthLabel');
+  const date = new Date(financialReportSelectedYear, financialReportSelectedMonth, 1);
+  label.textContent = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+}
+
+function getFinancialReportMonthValue() {
+  // Returns YYYY-MM string
+  const mm = String(financialReportSelectedMonth + 1).padStart(2, '0');
+  return `${financialReportSelectedYear}-${mm}`;
+}
+
+// Update Expense vs Revenue Pie Chart in Financial Report modal
+let expenseRevenuePieChart = null;
+async function updateExpenseRevenuePieChart(monthValue) {
+  const ctxPie = document.getElementById('expenseRevenuePieChart').getContext('2d');
+  try {
+    const params = monthValue ? `?month=${monthValue}` : '';
+    const [revenueRes, expensesRes, profitRes] = await Promise.all([
+      fetch(`http://localhost:5000/api/financial-report/total-revenue${params}`),
+      fetch(`http://localhost:5000/api/financial-report/total-expenses${params}`),
+      fetch(`http://localhost:5000/api/financial-report/net-profit${params}`)
+    ]);
+    const revenueData = await revenueRes.json();
+    const expensesData = await expensesRes.json();
+    const profitData = await profitRes.json();
+    const revenue = revenueData.totalRevenue || 0;
+    const expenses = expensesData.totalExpenses || 0;
+    const netProfit = profitData.netProfit || 0;
+    if (expenseRevenuePieChart) expenseRevenuePieChart.destroy();
+    expenseRevenuePieChart = new Chart(ctxPie, {
+      type: 'pie',
+      data: {
+        labels: ['Expense', 'Revenue', 'Net Profit'],
+        datasets: [{
+          data: [expenses, revenue, netProfit],
+          backgroundColor: [
+            'rgb(220, 53, 69)',   // Expense: red
+            'rgb(40, 167, 69)',   // Revenue: green
+            'rgb(26, 115, 232)'   // Net Profit: blue
+          ],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom'
+          }
+        }
+      }
+    });
+  } catch (err) {
+    ctxPie.clearRect(0, 0, ctxPie.canvas.width, ctxPie.canvas.height);
+    console.error('Error updating Expense vs Revenue chart:', err);
+  }
+}
+// Update pie chart when month changes or modal is shown
+function updateFinancialReportAllForMonth(monthValue) {
+  updateFinancialReportCardsForMonth(monthValue);
+  updateExpenseRevenuePieChart(monthValue);
+}
+// Patch month navigation to update pie chart as well
+function updateFinancialReportCardsForSelectedMonth() {
+  updateFinancialReportMonthLabel();
+  updateFinancialReportAllForMonth(getFinancialReportMonthValue());
+}
+if (financialReportModal) {
+  financialReportModal.addEventListener('show.bs.modal', function() {
+    const now = new Date();
+    financialReportSelectedMonth = now.getMonth();
+    financialReportSelectedYear = now.getFullYear();
+    updateFinancialReportCardsForSelectedMonth();
+  });
+  // Add event listeners for month navigation buttons
+  const prevBtn = document.getElementById('financialReportMonthPrev');
+  const nextBtn = document.getElementById('financialReportMonthNext');
+  if (prevBtn) {
+    prevBtn.addEventListener('click', function() {
+      financialReportSelectedMonth--;
+      if (financialReportSelectedMonth < 0) {
+        financialReportSelectedMonth = 11;
+        financialReportSelectedYear--;
+      }
+      updateFinancialReportCardsForSelectedMonth();
+    });
+  }
+  if (nextBtn) {
+    nextBtn.addEventListener('click', function() {
+      financialReportSelectedMonth++;
+      if (financialReportSelectedMonth > 11) {
+        financialReportSelectedMonth = 0;
+        financialReportSelectedYear++;
+      }
+      updateFinancialReportCardsForSelectedMonth();
+    });
+  }
+}
+
+// Render Monthly Profit Trend Chart
+let profitTrendLineChart = null;
+async function renderProfitTrendLineChart() {
+  const ctxLine = document.getElementById('profitTrendLineChart').getContext('2d');
+  try {
+    const response = await fetch('http://localhost:5000/api/financial-report/monthly-profit-trend');
+    if (!response.ok) throw new Error('Failed to fetch monthly profit trend');
+    const data = await response.json();
+    // Sort months from most recent to oldest, then reverse for left-to-right
+    const months = (data.months || []).slice().reverse();
+    const labels = months.map(m => {
+      // Format as 'MMM YYYY'
+      const [year, month] = m.month.split('-');
+      const d = new Date(Number(year), Number(month) - 1, 1);
+      return d.toLocaleString('default', { month: 'short', year: 'numeric' });
+    });
+    const profits = months.map(m => m.netProfit);
+    if (profitTrendLineChart) profitTrendLineChart.destroy();
+    profitTrendLineChart = new Chart(ctxLine, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Net Profit',
+          data: profits,
+          borderColor: 'rgb(26, 115, 232)',
+          backgroundColor: 'rgba(26, 115, 232, 0.1)',
+          tension: 0.3,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: false, // Important for scrollable charts
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return '$' + value.toLocaleString();
+              }
+            }
+          }
+        }
+      }
+    });
+  } catch (err) {
+    ctxLine.clearRect(0, 0, ctxLine.canvas.width, ctxLine.canvas.height);
+    console.error('Error rendering Monthly Profit Trend chart:', err);
+  }
+}
+// Render chart when Financial Report modal is shown
+if (financialReportModal) {
+  financialReportModal.addEventListener('show.bs.modal', renderProfitTrendLineChart);
+}
