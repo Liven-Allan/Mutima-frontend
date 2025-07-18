@@ -627,7 +627,7 @@
               <div class="card shadow-sm border-0">
                 <div class="card-body text-center">
                   <div class="text-secondary mb-1">Total SKUs</div>
-                  <h4 class="fw-bold text-primary mb-0">120</h4>
+                  <h4 class="fw-bold text-primary mb-0" id="stock-analysis-total-skus">...</h4>
                 </div>
               </div>
             </div>
@@ -635,7 +635,7 @@
               <div class="card shadow-sm border-0">
                 <div class="card-body text-center">
                   <div class="text-secondary mb-1">Low Stock Items</div>
-                  <h4 class="fw-bold text-danger mb-0">8</h4>
+                  <h4 class="fw-bold text-danger mb-0" id="stock-analysis-low-stock">...</h4>
                 </div>
               </div>
             </div>
@@ -643,7 +643,7 @@
               <div class="card shadow-sm border-0">
                 <div class="card-body text-center">
                   <div class="text-secondary mb-1">Recently Received</div>
-                  <h4 class="fw-bold text-success mb-0">15</h4>
+                  <h4 class="fw-bold text-success mb-0" id="stock-analysis-recently-received">...</h4>
                 </div>
               </div>
             </div>
@@ -680,28 +680,8 @@
                   <th class="fw-bold">Last Received</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td><a href="#" class="text-decoration-underline text-primary">Product A</a></td>
-                  <td><span class="fw-bold text-danger">3</span></td>
-                  <td>$50</td>
-                  <td>$150</td>
-                  <td>2024-03-15</td>
-                </tr>
-                <tr>
-                  <td><a href="#" class="text-decoration-underline text-primary">Product B</a></td>
-                  <td><span class="fw-bold text-success">25</span></td>
-                  <td>$120</td>
-                  <td>$3,000</td>
-                  <td>2024-03-10</td>
-                </tr>
-                <tr>
-                  <td><a href="#" class="text-decoration-underline text-primary">Product C</a></td>
-                  <td><span class="fw-bold text-warning">7</span></td>
-                  <td>$80</td>
-                  <td>$560</td>
-                  <td>2024-03-12</td>
-                </tr>
+              <tbody id="stockAnalysisTableBody">
+                <!-- Inventory details will be dynamically added here -->
               </tbody>
             </table>
           </div>

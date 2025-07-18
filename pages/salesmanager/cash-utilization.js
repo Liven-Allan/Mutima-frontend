@@ -919,3 +919,102 @@ async function fetchAndRenderTransactionHistory() {
     console.error('Failed to load transaction history:', err);
   }
 }
+
+// --- Stock Analysis Modal: Fetch and display Total SKUs ---
+const stockAnalysisModal = document.getElementById('stockAnalysisModal');
+if (stockAnalysisModal) {
+  stockAnalysisModal.addEventListener('show.bs.modal', () => {
+    fetchAndRenderTotalSKUs();
+    fetchAndRenderLowStockItems();
+    fetchAndRenderRecentlyReceivedItems();
+    fetchAndRenderStockAnalysisTable();
+  });
+}
+async function fetchAndRenderTotalSKUs() {
+  const elem = document.getElementById('stock-analysis-total-skus');
+  if (!elem) return;
+  elem.textContent = '...';
+  try {
+    const res = await fetch('http://localhost:5000/api/items/sku-count');
+    const data = await res.json();
+    elem.textContent = data.skuCount || 0;
+  } catch (err) {
+    elem.textContent = 'N/A';
+  }
+}
+
+if (stockAnalysisModal) {
+  stockAnalysisModal.addEventListener('show.bs.modal', () => {
+    fetchAndRenderTotalSKUs();
+    fetchAndRenderLowStockItems();
+  });
+}
+async function fetchAndRenderLowStockItems() {
+  const elem = document.getElementById('stock-analysis-low-stock');
+  if (!elem) return;
+  elem.textContent = '...';
+  try {
+    const res = await fetch('http://localhost:5000/api/items/low-stock-count');
+    const data = await res.json();
+    elem.textContent = data.lowStockCount || 0;
+  } catch (err) {
+    elem.textContent = 'N/A';
+  }
+}
+
+if (stockAnalysisModal) {
+  stockAnalysisModal.addEventListener('show.bs.modal', () => {
+    fetchAndRenderTotalSKUs();
+    fetchAndRenderLowStockItems();
+    fetchAndRenderRecentlyReceivedItems();
+  });
+}
+async function fetchAndRenderRecentlyReceivedItems() {
+  const elem = document.getElementById('stock-analysis-recently-received');
+  if (!elem) return;
+  elem.textContent = '...';
+  try {
+    const res = await fetch('http://localhost:5000/api/items/recently-received-count');
+    const data = await res.json();
+    elem.textContent = data.recentlyReceivedCount || 0;
+  } catch (err) {
+    elem.textContent = 'N/A';
+  }
+}
+
+if (stockAnalysisModal) {
+  stockAnalysisModal.addEventListener('show.bs.modal', () => {
+    fetchAndRenderTotalSKUs();
+    fetchAndRenderLowStockItems();
+    fetchAndRenderRecentlyReceivedItems();
+    fetchAndRenderStockAnalysisTable();
+  });
+}
+async function fetchAndRenderStockAnalysisTable() {
+  const tbody = document.getElementById('stockAnalysisTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Loading...</td></tr>';
+  try {
+    const res = await fetch('http://localhost:5000/api/items/stock-table');
+    const data = await res.json();
+    const items = data.items || [];
+    tbody.innerHTML = '';
+    if (!items.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No data</td></tr>';
+      return;
+    }
+    items.forEach(item => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><a href="#" class="text-decoration-underline text-primary">${item.name}</a></td>
+        <td><span class="fw-bold">${item.currentStock}</span></td>
+        <td>$${Number(item.unitPrice).toLocaleString()}</td>
+        <td>$${Number(item.totalCost).toLocaleString()}</td>
+        <td>${item.lastReceived || '-'}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading data</td></tr>';
+  }
+}
