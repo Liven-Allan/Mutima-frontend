@@ -652,15 +652,14 @@
           <div class="row align-items-center mb-3">
             <div class="col-md-8 d-flex flex-wrap gap-2 align-items-center">
               <label class="mb-0 me-2 text-secondary">Filter by:</label>
-              <input type="month" class="form-control form-control-sm w-auto" style="max-width: 140px;">
-              <select class="form-select form-select-sm w-auto" style="min-width: 130px;">
+              <select id="stockAnalysisStatusSelect" class="form-select form-select-sm w-auto" style="min-width: 130px;">
                 <option value="">All Stock</option>
-                <option>In Stock</option>
-                <option>Out of Stock</option>
+                <option value="in">In Stock</option>
+                <option value="out">Out of Stock</option>
               </select>
               <div class="input-group" style="width: 250px; height: 38px;">
                 <span class="input-group-text bg-white border-end-0"><i class="fas fa-search"></i></span>
-                <input type="text" class="form-control form-control-sm border-start-0" placeholder="Search products..." style="height: 38px;">
+                <input type="text" id="stockAnalysisSearchInput" class="form-control form-control-sm border-start-0" placeholder="Search products..." style="height: 38px;">
               </div>
             </div>
             <div class="col-md-4 d-flex justify-content-end gap-2">
@@ -669,7 +668,7 @@
             </div>
           </div>
           <!-- Inventory Table -->
-          <div class="table-responsive mb-4">
+          <div class="table-responsive" style="height: 300px;">
             <table class="table table-hover align-middle mb-0">
               <thead class="bg-light">
                 <tr>
@@ -685,13 +684,26 @@
               </tbody>
             </table>
           </div>
+          <!-- Pagination Controls for Stock Analysis Table -->
+          <div class="d-flex justify-content-between align-items-center mt-3" id="stockAnalysisPaginationControls">
+            <div>
+              <span id="stockAnalysisShowingText" class="text-sm text-secondary">Showing 1 to 4 of 0 items</span>
+            </div>
+            <div class="d-flex align-items-center">
+              <button class="btn btn-sm btn-outline-secondary me-2" id="stockAnalysisPrevPage" title="Previous"><i class="fas fa-chevron-left"></i></button>
+              <span id="stockAnalysisCurrentPageInfo" class="badge bg-primary px-3 py-2">Page 1 of 1</span>
+              <button class="btn btn-sm btn-outline-secondary ms-2" id="stockAnalysisNextPage" title="Next"><i class="fas fa-chevron-right"></i></button>
+            </div>
+          </div>
           <!-- Charts Section -->
           <div class="row mb-4">
             <div class="col-md-6 mb-3">
               <div class="card h-100 p-3">
-                <h6 class="fw-bold mb-3"><i class="fas fa-chart-bar me-2 text-warning"></i>Top 5 Items by Stock Value</h6>
-                <div style="height: 250px;">
-                  <canvas id="topStockValueBarChart"></canvas>
+                <h6 class="fw-bold mb-3"><i class="fas fa-chart-bar me-2 text-warning"></i>All Items by Stock Value</h6>
+                <div style="height: 250px; overflow-x: auto;">
+                  <div style="min-width: 600px; width: max-content;">
+                    <canvas id="topStockValueBarChart"></canvas>
+                  </div>
                 </div>
               </div>
             </div>

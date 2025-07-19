@@ -1018,3 +1018,317 @@ async function fetchAndRenderStockAnalysisTable() {
     tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading data</td></tr>';
   }
 }
+
+// --- Stock Analysis Table Pagination Logic ---
+const stockAnalysisPageSize = 4;
+let stockAnalysisCache = [];
+let stockAnalysisCurrentPage = 1;
+let stockAnalysisTotalPages = 1;
+
+function renderStockAnalysisTablePage(page) {
+  const tbody = document.getElementById('stockAnalysisTableBody');
+  const total = stockAnalysisFilteredCache.length;
+  stockAnalysisTotalPages = Math.ceil(total / stockAnalysisPageSize) || 1;
+  const startIdx = (page - 1) * stockAnalysisPageSize;
+  const endIdx = Math.min(startIdx + stockAnalysisPageSize, total);
+  tbody.innerHTML = '';
+  if (total === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No data</td></tr>';
+    updateStockAnalysisPaginationInfo(0, 0, 0);
+    updateStockAnalysisPaginationControls();
+    return;
+  }
+  for (let i = startIdx; i < endIdx; i++) {
+    const item = stockAnalysisFilteredCache[i];
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><a href="#" class="text-decoration-underline text-primary">${item.name}</a></td>
+      <td><span class="fw-bold">${item.currentStock}</span></td>
+      <td>$${Number(item.unitPrice).toLocaleString()}</td>
+      <td>$${Number(item.totalCost).toLocaleString()}</td>
+      <td>${item.lastReceived || '-'}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+  updateStockAnalysisPaginationInfo(startIdx + 1, endIdx, total);
+  updateStockAnalysisPaginationControls();
+}
+
+function updateStockAnalysisPaginationInfo(start, end, total) {
+  document.getElementById('stockAnalysisShowingText').textContent = `Showing ${start} to ${end} of ${total} items`;
+}
+
+function updateStockAnalysisPaginationControls() {
+  document.getElementById('stockAnalysisPrevPage').disabled = stockAnalysisCurrentPage <= 1;
+  document.getElementById('stockAnalysisNextPage').disabled = stockAnalysisCurrentPage >= stockAnalysisTotalPages;
+  document.getElementById('stockAnalysisCurrentPageInfo').textContent = `Page ${stockAnalysisCurrentPage} of ${stockAnalysisTotalPages}`;
+}
+
+function showStockAnalysisPage(page) {
+  stockAnalysisCurrentPage = page;
+  renderStockAnalysisTablePage(page);
+}
+
+document.getElementById('stockAnalysisPrevPage').addEventListener('click', function() {
+  if (stockAnalysisCurrentPage > 1) showStockAnalysisPage(stockAnalysisCurrentPage - 1);
+});
+document.getElementById('stockAnalysisNextPage').addEventListener('click', function() {
+  if (stockAnalysisCurrentPage < stockAnalysisTotalPages) showStockAnalysisPage(stockAnalysisCurrentPage + 1);
+});
+
+// Update fetch to cache all records and show first page
+async function fetchAndRenderStockAnalysisTable() {
+  const tbody = document.getElementById('stockAnalysisTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Loading...</td></tr>';
+  try {
+    const res = await fetch('http://localhost:5000/api/items/stock-table');
+    const data = await res.json();
+    stockAnalysisCache = data.items || [];
+    stockAnalysisFilteredCache = [...stockAnalysisCache];
+    stockAnalysisCurrentPage = 1;
+    showStockAnalysisPage(1);
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading data</td></tr>';
+    stockAnalysisCache = [];
+    stockAnalysisFilteredCache = [];
+    stockAnalysisCurrentPage = 1;
+    showStockAnalysisPage(1);
+  }
+}
+
+// --- Stock Analysis Table Search/Filter Logic ---
+let stockAnalysisFilteredCache = [];
+const stockAnalysisSearchInput = document.getElementById('stockAnalysisSearchInput');
+const stockAnalysisStatusSelect = document.getElementById('stockAnalysisStatusSelect');
+
+function applyStockAnalysisFilters() {
+  const search = stockAnalysisSearchInput ? stockAnalysisSearchInput.value.trim().toLowerCase() : '';
+  const status = stockAnalysisStatusSelect ? stockAnalysisStatusSelect.value : '';
+  let filtered = [...stockAnalysisCache];
+  // Status filter
+  if (status === 'in') {
+    filtered = filtered.filter(item => item.currentStock > (item.minimum_stock ?? 0));
+  } else if (status === 'out') {
+    filtered = filtered.filter(item => {
+      // Out of stock: total quantity is zero OR at/below minimum_stock (if defined)
+      const minStock = (typeof item.minimum_stock === 'number') ? item.minimum_stock : 0;
+      return item.currentStock === 0 || item.currentStock <= minStock;
+    });
+  }
+  // Search filter
+  if (search) {
+    const matches = filtered.filter(item => item.name.toLowerCase().includes(search));
+    const nonMatches = filtered.filter(item => !item.name.toLowerCase().includes(search));
+    stockAnalysisFilteredCache = [...matches, ...nonMatches];
+  } else {
+    stockAnalysisFilteredCache = filtered;
+  }
+  stockAnalysisCurrentPage = 1;
+  renderStockAnalysisTablePage(stockAnalysisCurrentPage);
+}
+
+if (stockAnalysisSearchInput) {
+  stockAnalysisSearchInput.addEventListener('input', applyStockAnalysisFilters);
+}
+if (stockAnalysisStatusSelect) {
+  stockAnalysisStatusSelect.addEventListener('change', applyStockAnalysisFilters);
+}
+// Patch renderStockAnalysisTablePage to use filtered cache
+function renderStockAnalysisTablePage(page) {
+  const tbody = document.getElementById('stockAnalysisTableBody');
+  const total = stockAnalysisFilteredCache.length;
+  stockAnalysisTotalPages = Math.ceil(total / stockAnalysisPageSize) || 1;
+  const startIdx = (page - 1) * stockAnalysisPageSize;
+  const endIdx = Math.min(startIdx + stockAnalysisPageSize, total);
+  tbody.innerHTML = '';
+  if (total === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No data</td></tr>';
+    updateStockAnalysisPaginationInfo(0, 0, 0);
+    updateStockAnalysisPaginationControls();
+    return;
+  }
+  for (let i = startIdx; i < endIdx; i++) {
+    const item = stockAnalysisFilteredCache[i];
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><a href="#" class="text-decoration-underline text-primary">${item.name}</a></td>
+      <td><span class="fw-bold">${item.currentStock}</span></td>
+      <td>$${Number(item.unitPrice).toLocaleString()}</td>
+      <td>$${Number(item.totalCost).toLocaleString()}</td>
+      <td>${item.lastReceived || '-'}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+  updateStockAnalysisPaginationInfo(startIdx + 1, endIdx, total);
+  updateStockAnalysisPaginationControls();
+}
+// Patch fetchAndRenderStockAnalysisTable to update filtered cache
+async function fetchAndRenderStockAnalysisTable() {
+  const tbody = document.getElementById('stockAnalysisTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Loading...</td></tr>';
+  try {
+    const res = await fetch('http://localhost:5000/api/items/stock-table');
+    const data = await res.json();
+    stockAnalysisCache = data.items || [];
+    stockAnalysisFilteredCache = [...stockAnalysisCache];
+    stockAnalysisCurrentPage = 1;
+    applyStockAnalysisFilters();
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading data</td></tr>';
+    stockAnalysisCache = [];
+    stockAnalysisFilteredCache = [];
+    stockAnalysisCurrentPage = 1;
+    renderStockAnalysisTablePage(1);
+  }
+}
+
+// --- Top Stock Value Bar Chart (Scrollable) ---
+let topStockValueBarChart = null;
+async function renderTopStockValueBarChart() {
+  const canvas = document.getElementById('topStockValueBarChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  try {
+    const res = await fetch('http://localhost:5000/api/items/stock-table');
+    const data = await res.json();
+    const items = data.items || [];
+    if (!items.length) {
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      return;
+    }
+    // Prepare data for chart
+    const labels = items.map(item => item.name);
+    const values = items.map(item => item.totalCost);
+    // Destroy previous chart if exists
+    if (topStockValueBarChart) topStockValueBarChart.destroy();
+    // Dynamically set width for horizontal scroll if many items
+    const minBarWidth = 60;
+    const chartWidth = Math.max(600, labels.length * minBarWidth);
+    canvas.width = chartWidth;
+    topStockValueBarChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Stock Value',
+          data: values,
+          backgroundColor: 'rgb(255, 193, 7)',
+          borderRadius: 5
+        }]
+      },
+      options: {
+        indexAxis: 'x',
+        responsive: false, // Important for scrollable charts
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Cost ($)'
+            },
+            ticks: {
+              callback: function(value) {
+                return '$' + value.toLocaleString();
+              }
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Products'
+            },
+            ticks: {
+              autoSkip: false,
+              maxRotation: 45,
+              minRotation: 30
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return ' $' + context.parsed.y.toLocaleString();
+              }
+            }
+          }
+        }
+      }
+    });
+  } catch (err) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    console.error('Error rendering Top Stock Value Bar Chart:', err);
+  }
+}
+if (stockAnalysisModal) {
+  stockAnalysisModal.addEventListener('show.bs.modal', renderTopStockValueBarChart);
+}
+
+// --- Stock Movement Trend Line Chart ---
+let stockMovementLineChart = null;
+async function renderStockMovementLineChart() {
+  const canvas = document.getElementById('stockMovementLineChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  try {
+    const res = await fetch('http://localhost:5000/api/stock/movement-trend');
+    const data = await res.json();
+    const labels = data.months || [];
+    const inflow = data.inflow || [];
+    const outflow = data.outflow || [];
+    if (stockMovementLineChart) stockMovementLineChart.destroy();
+    stockMovementLineChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Stock Inflow',
+            data: inflow,
+            borderColor: 'rgb(26, 115, 232)', // blue
+            backgroundColor: 'rgba(26, 115, 232, 0.1)',
+            tension: 0.3,
+            fill: false
+          },
+          {
+            label: 'Stock Outflow',
+            data: outflow,
+            borderColor: 'rgb(40, 167, 69)', // green
+            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+            tension: 0.3,
+            fill: false
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true, position: 'top' }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: 'Quantity' }
+          },
+          x: {
+            title: { display: true, text: 'Month' }
+          }
+        }
+      }
+    });
+  } catch (err) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    console.error('Error rendering Stock Movement Trend chart:', err);
+  }
+}
+// Use the already declared stockAnalysisModal for event binding
+if (stockAnalysisModal) {
+  stockAnalysisModal.addEventListener('show.bs.modal', renderStockMovementLineChart);
+}
