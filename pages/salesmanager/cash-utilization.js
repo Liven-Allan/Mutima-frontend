@@ -1332,3 +1332,150 @@ async function renderStockMovementLineChart() {
 if (stockAnalysisModal) {
   stockAnalysisModal.addEventListener('show.bs.modal', renderStockMovementLineChart);
 }
+
+// --- Cash Utilization Ratio Chart (Dynamic) ---
+// --- Cash Utilization Ratio Month Navigation ---
+let cashUtilizationSelectedMonth = new Date().getMonth();
+let cashUtilizationSelectedYear = new Date().getFullYear();
+function getCashUtilizationMonthValue() {
+  return `${cashUtilizationSelectedYear}-${String(cashUtilizationSelectedMonth + 1).padStart(2, '0')}`;
+}
+function updateCashUtilizationMonthLabel() {
+  const label = document.getElementById('cashUtilizationMonthLabel');
+  if (label) {
+    const d = new Date(cashUtilizationSelectedYear, cashUtilizationSelectedMonth, 1);
+    label.textContent = d.toLocaleString('default', { month: 'long', year: 'numeric' });
+  }
+}
+async function renderCashUtilizationRatioChart() {
+  const ctx = document.getElementById('cash-utilization-chart').getContext('2d');
+  try {
+    const month = getCashUtilizationMonthValue();
+    const res = await fetch(`http://localhost:5000/api/cash-utilization-ratio?month=${month}`);
+    const data = await res.json();
+    const { percentages } = data;
+    const chartData = [percentages.stockInvestment, percentages.operationalExpenses, percentages.pendingPayments, percentages.sales];
+    const chartLabels = ['Stock Investment', 'Operational Expenses', 'Pending Payments', 'Sales'];
+    const chartColors = [
+      'rgb(26, 115, 232)', // blue
+      'rgb(40, 167, 69)',  // green
+      'rgb(255, 193, 7)',  // yellow
+      'rgb(255, 87, 34)'   // orange for Sales
+    ];
+    if (window.cashUtilizationChart) window.cashUtilizationChart.destroy();
+    window.cashUtilizationChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: chartLabels,
+        datasets: [{
+          data: chartData,
+          backgroundColor: chartColors,
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        cutout: '70%'
+      }
+    });
+    // Update legend percentages in the DOM
+    const legendMap = {
+      'Stock Investment': percentages.stockInvestment,
+      'Operational Expenses': percentages.operationalExpenses,
+      'Pending Payments': percentages.pendingPayments,
+      'Sales': percentages.sales
+    };
+    document.querySelectorAll('#cash-utilization-legend .legend-label').forEach(el => {
+      const label = el.getAttribute('data-label');
+      if (legendMap[label] !== undefined) {
+        el.textContent = `${label} (${legendMap[label]}%)`;
+      }
+    });
+    updateCashUtilizationMonthLabel();
+  } catch (err) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    console.error('Error rendering Cash Utilization Ratio chart:', err);
+  }
+}
+// Month navigation event listeners
+const cashUtilizationMonthPrev = document.getElementById('cashUtilizationMonthPrev');
+const cashUtilizationMonthNext = document.getElementById('cashUtilizationMonthNext');
+if (cashUtilizationMonthPrev) {
+  cashUtilizationMonthPrev.addEventListener('click', function() {
+    cashUtilizationSelectedMonth--;
+    if (cashUtilizationSelectedMonth < 0) {
+      cashUtilizationSelectedMonth = 11;
+      cashUtilizationSelectedYear--;
+    }
+    renderCashUtilizationRatioChart();
+  });
+}
+if (cashUtilizationMonthNext) {
+  cashUtilizationMonthNext.addEventListener('click', function() {
+    cashUtilizationSelectedMonth++;
+    if (cashUtilizationSelectedMonth > 11) {
+      cashUtilizationSelectedMonth = 0;
+      cashUtilizationSelectedYear++;
+    }
+    renderCashUtilizationRatioChart();
+  });
+}
+window.addEventListener('DOMContentLoaded', renderCashUtilizationRatioChart);
+
+// --- Top Performing Products by ROI Chart ---
+async function renderTopROIChart() {
+  const ctx = document.getElementById('roi-chart').getContext('2d');
+  try {
+    const res = await fetch('http://localhost:5000/api/items/top-roi');
+    const data = await res.json();
+    const items = data.items || [];
+    const labels = items.map(i => i.name);
+    const values = items.map(i => i.roi);
+    if (window.topROIChart) window.topROIChart.destroy();
+    window.topROIChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'ROI (%)',
+          data: values,
+          backgroundColor: 'rgb(26, 115, 232)',
+          borderRadius: 5
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'ROI (%)'
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Products'
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          }
+        }
+      }
+    });
+  } catch (err) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    console.error('Error rendering Top ROI chart:', err);
+  }
+}
+// Render chart when modal is shown
+window.addEventListener('DOMContentLoaded', renderTopROIChart);
