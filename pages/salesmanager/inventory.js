@@ -198,6 +198,14 @@
         const tbody = document.getElementById('weighableItemsTableBody');
         tbody.innerHTML = '';
         items.forEach(item => {
+          let statusHtml = '';
+          if (item.total_quantity === 0) {
+            statusHtml = '<span class="badge badge-sm bg-gradient-danger">Out of Stock</span>';
+          } else if (item.total_quantity <= item.minimum_stock) {
+            statusHtml = '<span class="badge badge-sm bg-gradient-warning">Low Stock</span>';
+          } else {
+            statusHtml = '<span class="badge badge-sm bg-gradient-success">In Stock</span>';
+          }
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td>${item.name || ''}</td>
@@ -205,11 +213,7 @@
             <td>${item.base_unit || ''}</td>
             <td>${item.selling_price_per_unit || ''}</td>
             <td>${item.purchase_price_per_package || ''}</td>
-            <td>
-              ${item.minimum_stock > 0
-                ? '<span class="badge badge-sm bg-gradient-success">In Stock</span>'
-                : '<span class="badge badge-sm bg-gradient-warning">Low Stock</span>'}
-            </td>
+            <td>${statusHtml}</td>
             <td><button class="btn btn-sm btn-outline-primary update-item-btn" data-id="${item._id}">Update</button></td>
           `;
           tbody.appendChild(tr);
@@ -250,6 +254,14 @@
         const tbody = document.getElementById('unitItemsTableBody');
         tbody.innerHTML = '';
         items.forEach(item => {
+          let statusHtml = '';
+          if (item.total_quantity === 0) {
+            statusHtml = '<span class="badge badge-sm bg-gradient-danger">Out of Stock</span>';
+          } else if (item.total_quantity <= item.minimum_stock) {
+            statusHtml = '<span class="badge badge-sm bg-gradient-warning">Low Stock</span>';
+          } else {
+            statusHtml = '<span class="badge badge-sm bg-gradient-success">In Stock</span>';
+          }
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td>${item.name || ''}</td>
@@ -257,11 +269,7 @@
             <td>${item.base_unit || ''}</td>
             <td>${item.selling_price_per_unit || ''}</td>
             <td>${item.purchase_price_per_package || ''}</td>
-            <td>
-              ${item.minimum_stock > 0
-                ? '<span class="badge badge-sm bg-gradient-success">In Stock</span>'
-                : '<span class="badge badge-sm bg-gradient-warning">Low Stock</span>'}
-            </td>
+            <td>${statusHtml}</td>
             <td><button class="btn btn-sm btn-outline-primary update-item-btn" data-id="${item._id}">Update</button></td>
           `;
           tbody.appendChild(tr);

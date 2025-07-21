@@ -218,33 +218,6 @@ function updateCreditTransactionsPaginationControls() {
   document.getElementById('creditTransactionsNextPage').disabled = creditTransactionsCurrentPage >= creditTransactionsTotalPages;
   document.getElementById('creditTransactionsCurrentPageInfo').textContent = `Page ${creditTransactionsCurrentPage} of ${creditTransactionsTotalPages}`;
 }
-function renderCreditTransactionsTablePage(page) {
-  creditTransactionsCurrentPage = page;
-  const total = creditTransactionsCache.length;
-  creditTransactionsTotalPages = Math.ceil(total / creditTransactionsPageSize) || 1;
-  // Sort: Overdue first, then Pending, then Completed
-  const sorted = [...creditTransactionsCache].sort((a, b) => {
-    const getStatusOrder = tx => {
-      const now = new Date();
-      const balance = (tx.total_amount || 0) - (tx.amount_paid || 0);
-      if (tx.payment_status === 'paid' || balance <= 0) return 2; // Completed last
-      if (tx.agreed_repayment_date && new Date(tx.agreed_repayment_date) < now) return 0; // Overdue first
-      return 1; // Pending second
-    };
-    return getStatusOrder(a) - getStatusOrder(b);
-  });
-  const startIdx = (creditTransactionsCurrentPage - 1) * creditTransactionsPageSize;
-  const endIdx = Math.min(startIdx + creditTransactionsPageSize, total);
-  renderCreditTransactionsTable(sorted.slice(startIdx, endIdx));
-  updateCreditTransactionsPaginationInfo(startIdx + 1, endIdx, total);
-  updateCreditTransactionsPaginationControls();
-}
-document.getElementById('creditTransactionsPrevPage').addEventListener('click', function() {
-  if (creditTransactionsCurrentPage > 1) renderCreditTransactionsTablePage(creditTransactionsCurrentPage - 1);
-});
-document.getElementById('creditTransactionsNextPage').addEventListener('click', function() {
-  if (creditTransactionsCurrentPage < creditTransactionsTotalPages) renderCreditTransactionsTablePage(creditTransactionsCurrentPage + 1);
-});
 
 // Refactor fetchAndRenderCreditTransactions to use pagination
 function renderCreditTransactionsTable(data) {
@@ -317,7 +290,7 @@ function fetchAndRenderCreditTransactions() {
     .then(response => response.json())
     .then(data => {
       creditTransactionsCache = data;
-      renderCreditTransactionsTablePage(1);
+      renderCreditTransactionsTablePageFiltered(1);
     })
     .catch(() => {
       creditTransactionsCache = [];
@@ -325,6 +298,143 @@ function fetchAndRenderCreditTransactions() {
       updateCreditTransactionsPaginationInfo(0, 0, 0);
       updateCreditTransactionsPaginationControls();
     });
+}
+
+// --- Credit Transactions Status Filtering ---
+let creditTransactionsStatus = 'all';
+const creditTransactionsStatusBtn = document.getElementById('creditTransactionsStatusBtn');
+const creditTransactionsStatusDropdown = document.getElementById('creditTransactionsStatusDropdown');
+
+// --- Credit Transactions Sorting Helper ---
+function sortCreditTransactions(arr) {
+  return [...arr].sort((a, b) => {
+    const getStatusOrder = tx => {
+      const now = new Date();
+      const balance = (tx.total_amount || 0) - (tx.amount_paid || 0);
+      if (tx.payment_status === 'paid' || balance <= 0) return 2; // Completed last
+      if (tx.agreed_repayment_date && new Date(tx.agreed_repayment_date) < now) return 0; // Overdue first
+      return 1; // Pending second
+    };
+    return getStatusOrder(a) - getStatusOrder(b);
+  });
+}
+
+function filterCreditTransactionsByStatus() {
+  let filtered = creditTransactionsCache;
+  if (creditTransactionsStatus !== 'all') {
+    filtered = creditTransactionsCache.filter(tx => {
+      const now = new Date();
+      const balance = (tx.total_amount || 0) - (tx.amount_paid || 0);
+      if (creditTransactionsStatus === 'pending') {
+        return (tx.payment_status !== 'paid' && balance > 0 && (!tx.agreed_repayment_date || new Date(tx.agreed_repayment_date) >= now));
+      } else if (creditTransactionsStatus === 'overdue') {
+        return (tx.payment_status !== 'paid' && balance > 0 && tx.agreed_repayment_date && new Date(tx.agreed_repayment_date) < now);
+      } else if (creditTransactionsStatus === 'paid') {
+        return (tx.payment_status === 'paid' || balance <= 0);
+      }
+      return true;
+    });
+  }
+  return sortCreditTransactions(filtered);
+}
+
+function renderCreditTransactionsTablePageFiltered(page) {
+  creditTransactionsCurrentPage = page;
+  const filtered = filterCreditTransactionsByStatus();
+  const total = filtered.length;
+  creditTransactionsTotalPages = Math.ceil(total / creditTransactionsPageSize) || 1;
+  const startIdx = (creditTransactionsCurrentPage - 1) * creditTransactionsPageSize;
+  const endIdx = Math.min(startIdx + creditTransactionsPageSize, total);
+  renderCreditTransactionsTable(filtered.slice(startIdx, endIdx));
+  updateCreditTransactionsPaginationInfo(total === 0 ? 0 : startIdx + 1, endIdx, total);
+  updateCreditTransactionsPaginationControls();
+}
+
+if (creditTransactionsStatusDropdown) {
+  creditTransactionsStatusDropdown.querySelectorAll('.credit-status-option').forEach(opt => {
+    opt.addEventListener('click', e => {
+      e.preventDefault();
+      const status = opt.getAttribute('data-status');
+      if (status) {
+        creditTransactionsStatus = status;
+        creditTransactionsStatusBtn.innerHTML = `<i class='fas fa-calendar me-1'></i> ${opt.textContent}`;
+        renderCreditTransactionsTablePageFiltered(1);
+      }
+    });
+  });
+}
+// Patch pagination to use filtered data
+const origPrev = document.getElementById('creditTransactionsPrevPage');
+const origNext = document.getElementById('creditTransactionsNextPage');
+if (origPrev) origPrev.onclick = function() {
+  if (creditTransactionsCurrentPage > 1) renderCreditTransactionsTablePageFiltered(creditTransactionsCurrentPage - 1);
+};
+if (origNext) origNext.onclick = function() {
+  if (creditTransactionsCurrentPage < creditTransactionsTotalPages) renderCreditTransactionsTablePageFiltered(creditTransactionsCurrentPage + 1);
+};
+
+// --- Export Credit Transactions to PDF ---
+const creditTransactionsExportBtn = document.getElementById('creditTransactionsExportBtn');
+if (creditTransactionsExportBtn) {
+  creditTransactionsExportBtn.addEventListener('click', () => {
+    if (!window.jspdf || !window.html2canvas) {
+      alert('jsPDF and html2canvas are required for export.');
+      return;
+    }
+    const filtered = filterCreditTransactionsByStatus();
+    // Build HTML table for export
+    let html = `<table style='width:100%;border-collapse:collapse;font-size:12px;'>`;
+    html += `<thead><tr>`;
+    html += `<th style='border:1px solid #ccc;padding:4px;'>Customer</th>`;
+    html += `<th style='border:1px solid #ccc;padding:4px;'>Items</th>`;
+    html += `<th style='border:1px solid #ccc;padding:4px;'>Date</th>`;
+    html += `<th style='border:1px solid #ccc;padding:4px;'>Amount</th>`;
+    html += `<th style='border:1px solid #ccc;padding:4px;'>Status</th>`;
+    html += `</tr></thead><tbody>`;
+    filtered.forEach(tx => {
+      const customer = tx.customer_id || {};
+      const customerName = customer.name || '';
+      let itemsDetails = '';
+      if (tx.sale_id && Array.isArray(tx.sale_id.items)) {
+        itemsDetails = tx.sale_id.items.map(item => {
+          if (item && item.item_id && item.item_id.name) {
+            return item.item_id.name + (item.quantity_sold ? ` (${item.quantity_sold})` : '');
+          }
+          return '';
+        }).filter(Boolean).join(', ');
+      }
+      const repaymentDate = tx.agreed_repayment_date ? new Date(tx.agreed_repayment_date).toISOString().split('T')[0] : '';
+      const balance = (tx.total_amount || 0) - (tx.amount_paid || 0);
+      let status = 'Pending';
+      const now = new Date();
+      if (tx.payment_status === 'paid' || balance <= 0) status = 'Completed';
+      else if (tx.agreed_repayment_date && new Date(tx.agreed_repayment_date) < now) status = 'Overdue';
+      html += `<tr>`;
+      html += `<td style='border:1px solid #ccc;padding:4px;'>${customerName}</td>`;
+      html += `<td style='border:1px solid #ccc;padding:4px;'>${itemsDetails}</td>`;
+      html += `<td style='border:1px solid #ccc;padding:4px;'>${repaymentDate}</td>`;
+      html += `<td style='border:1px solid #ccc;padding:4px;'>$${balance.toLocaleString()}</td>`;
+      html += `<td style='border:1px solid #ccc;padding:4px;'>${status}</td>`;
+      html += `</tr>`;
+    });
+    html += `</tbody></table>`;
+    // Create a container for html2canvas
+    const container = document.createElement('div');
+    container.innerHTML = html;
+    container.style.position = 'fixed';
+    container.style.left = '-9999px';
+    document.body.appendChild(container);
+    window.html2canvas(container, { scale: 2 }).then(canvas => {
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new window.jspdf.jsPDF('l', 'pt', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const imgWidth = pageWidth - 40;
+      const imgHeight = canvas.height * imgWidth / canvas.width;
+      pdf.addImage(imgData, 'PNG', 20, 20, imgWidth, imgHeight);
+      pdf.save('credit-transactions.pdf');
+      document.body.removeChild(container);
+    });
+  });
 }
 
 // Repayment Tracking Calendar Logic
