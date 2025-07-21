@@ -4,10 +4,10 @@ function fetchTodaysSalesTotal() {
     .then(res => res.json())
     .then(data => {
       const value = typeof data.total === 'number' ? data.total : 0;
-      document.getElementById('todaysSalesValue').textContent = `$${value.toLocaleString()}`;
+      document.getElementById('todaysSalesValue').textContent = `shs:${value.toLocaleString()}`;
     })
     .catch(() => {
-      document.getElementById('todaysSalesValue').textContent = '$0';
+      document.getElementById('todaysSalesValue').textContent = 'shs:';
     });
 }
 
@@ -30,10 +30,10 @@ function fetchTodaysProfits() {
     .then(res => res.json())
     .then(data => {
       const value = typeof data.profit === 'number' ? data.profit : 0;
-      document.getElementById('todaysProfitsValue').textContent = `$${value.toLocaleString()}`;
+      document.getElementById('todaysProfitsValue').textContent = `shs:${value.toLocaleString()}`;
     })
     .catch(() => {
-      document.getElementById('todaysProfitsValue').textContent = '$0';
+      document.getElementById('todaysProfitsValue').textContent = 'shs:';
     });
 }
 
@@ -69,11 +69,11 @@ function renderProfitReportTable(items) {
     tr.innerHTML = `
       <td>${row.product}</td>
       <td>${row.quantity}</td>
-      <td>$${Number(row.buyingPrice).toFixed(2)}</td>
-      <td>$${Number(row.sellingPrice).toFixed(2)}</td>
-      <td>$${Number(row.totalCost).toFixed(2)}</td>
-      <td>$${Number(row.totalRevenue).toFixed(2)}</td>
-      <td>$${Number(row.profit).toFixed(2)}</td>
+      <td>shs:${Number(row.buyingPrice).toFixed(2)}</td>
+      <td>shs:${Number(row.sellingPrice).toFixed(2)}</td>
+      <td>shs:${Number(row.totalCost).toFixed(2)}</td>
+      <td>shs:${Number(row.totalRevenue).toFixed(2)}</td>
+      <td>shs:${Number(row.profit).toFixed(2)}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -111,18 +111,18 @@ function fetchProfitReport(dateStr) {
       profitReportCurrentPage = 1;
       profitReportTotalPages = Math.ceil(profitReportCache.length / profitReportRecordsPerPage) || 1;
       showProfitReportPage(1);
-      document.getElementById('profitReportTotalCost').textContent = `$${Number(data.totalCost || 0).toFixed(2)}`;
-      document.getElementById('profitReportTotalRevenue').textContent = `$${Number(data.totalRevenue || 0).toFixed(2)}`;
-      document.getElementById('profitReportProfit').textContent = `$${Number(data.profit || 0).toFixed(2)}`;
+      document.getElementById('profitReportTotalCost').textContent = `shs:${Number(data.totalCost || 0).toFixed(2)}`;
+      document.getElementById('profitReportTotalRevenue').textContent = `shs:${Number(data.totalRevenue || 0).toFixed(2)}`;
+      document.getElementById('profitReportProfit').textContent = `shs:${Number(data.profit || 0).toFixed(2)}`;
     })
     .catch(() => {
       profitReportCache = [];
       renderProfitReportTable([]);
       updateProfitReportPaginationInfo(0, 0, 0);
       updateProfitReportPaginationControls();
-      document.getElementById('profitReportTotalCost').textContent = '$0.00';
-      document.getElementById('profitReportTotalRevenue').textContent = '$0.00';
-      document.getElementById('profitReportProfit').textContent = '$0.00';
+      document.getElementById('profitReportTotalCost').textContent = 'shs:';
+      document.getElementById('profitReportTotalRevenue').textContent = 'shs:';
+      document.getElementById('profitReportProfit').textContent = 'shs:';
     });
 }
 
@@ -186,7 +186,7 @@ function renderCustomersTodayTablePage(startIdx, endIdx) {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${row.name}</td>
-      <td>$${Number(row.amount).toFixed(2)}</td>
+      <td>shs${Number(row.amount).toFixed(2)}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -278,7 +278,7 @@ function renderSalesReportTable(sales) {
     tr.innerHTML = `
       <td>${sale.customerName}</td>
       <td>${itemsStr}</td>
-      <td>$${Number(sale.totalAmount).toFixed(2)}</td>
+      <td>shs:${Number(sale.totalAmount).toFixed(2)}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -370,10 +370,10 @@ function renderRecentSalesTable(sales) {
         <span class="text-secondary text-xs font-weight-bold">${sale.date}</span>
       </td>
       <td class="align-middle text-center">
-        <span class="text-secondary text-xs font-weight-bold">$${Number(sale.total).toLocaleString()}</span>
+        <span class="text-secondary text-xs font-weight-bold">shs:${Number(sale.total).toLocaleString()}</span>
       </td>
       <td class="align-middle text-center">
-        <span class="text-secondary text-xs font-weight-bold">$${Number(sale.profit).toLocaleString()}</span>
+        <span class="text-secondary text-xs font-weight-bold">shs:${Number(sale.profit).toLocaleString()}</span>
       </td>
     `;
     tbody.appendChild(tr);
@@ -417,10 +417,10 @@ if (recentSalesSelectDateBtn && recentSalesDateInput) {
   });
   recentSalesDateInput.addEventListener('change', function() {
     if (this.value) {
-      recentSalesSelectedDate = this.value;
-      fetchRecentSales(1, recentSalesSelectedDate);
+      window.recentSalesSelectedDate = this.value;
+      fetchRecentSales(1, window.recentSalesSelectedDate);
     } else {
-      recentSalesSelectedDate = null;
+      window.recentSalesSelectedDate = null;
       fetchRecentSales(1);
     }
   });
@@ -468,7 +468,7 @@ function renderSalesBargraph(labels, values) {
           beginAtZero: true,
           ticks: {
             callback: function(value) {
-              return '$' + value.toLocaleString();
+              return 'shs:' + value.toLocaleString();
             }
           }
         }
@@ -542,7 +542,7 @@ async function fetchAndRenderTopSellingItems(year, month) {
     let totalRevenue = 0;
     if (!items.length) {
       tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No data</td></tr>';
-      document.getElementById('topSellingItemsTotalRevenue').textContent = '$0';
+      document.getElementById('topSellingItemsTotalRevenue').textContent = 'shs:';
       return;
     }
     items.forEach((item, idx) => {
@@ -552,15 +552,15 @@ async function fetchAndRenderTopSellingItems(year, month) {
         <td>${idx + 1}</td>
         <td>${item.item_name || ''}</td>
         <td>${item.quantity || 0}</td>
-        <td class="align-middle text-center text-sm"><span class="text-secondary text-xs font-weight-bold">$${Number(item.cost || 0).toLocaleString()}</span></td>
+        <td class="align-middle text-center text-sm"><span class="text-secondary text-xs font-weight-bold">shs:${Number(item.cost || 0).toLocaleString()}</span></td>
       `;
       tbody.appendChild(tr);
     });
-    document.getElementById('topSellingItemsTotalRevenue').textContent = `$${Number(totalRevenue).toLocaleString()}`;
+    document.getElementById('topSellingItemsTotalRevenue').textContent = `shs:${Number(totalRevenue).toLocaleString()}`;
   } catch (error) {
     const tbody = document.getElementById('topSellingItemsTableBody');
     tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading data</td></tr>';
-    document.getElementById('topSellingItemsTotalRevenue').textContent = '$0';
+    document.getElementById('topSellingItemsTotalRevenue').textContent = 'shs:';
     console.error('Failed to load top selling items:', error);
   }
 }
@@ -674,7 +674,7 @@ function showSalesTrendReportModal() {
     tr.innerHTML = `
       <td>${date.toLocaleString('default', { month: 'long' })}</td>
       <td>${date.getFullYear()}</td>
-      <td>$${found ? Number(found.total).toLocaleString() : '0'}</td>
+      <td>shs:${found ? Number(found.total).toLocaleString() : '0'}</td>
     `;
     tbody.appendChild(tr);
   } else {
@@ -703,7 +703,7 @@ function renderSalesTrendReportTablePage(page) {
     tr.innerHTML = `
       <td>${date.toLocaleString('default', { month: 'long' })}</td>
       <td>${date.getFullYear()}</td>
-      <td>$${Number(m.total).toLocaleString()}</td>
+      <td>shs:${Number(m.total).toLocaleString()}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -776,7 +776,7 @@ function renderSalesTrend(labels, values) {
           beginAtZero: true,
           ticks: {
             callback: function(value) {
-              return '$' + value.toLocaleString();
+              return 'shs:' + value.toLocaleString();
             }
           }
         }
@@ -828,8 +828,8 @@ document.addEventListener('DOMContentLoaded', function() {
             sale.customerName,
             `${sale.items.length} Item${sale.items.length !== 1 ? 's' : ''}\n${itemsStr}`,
             sale.date,
-            `$${Number(sale.total).toLocaleString()}`,
-            `$${Number(sale.profit).toLocaleString()}`
+            `shs:${Number(sale.total).toLocaleString()}`,
+            `shs:${Number(sale.profit).toLocaleString()}`
           ]);
         });
         if (rows.length === 0) {
@@ -837,7 +837,7 @@ document.addEventListener('DOMContentLoaded', function() {
           return;
         }
         // Add summary row
-        rows.push(['', '', 'Total', `$${totalSum.toLocaleString()}`, `$${profitSum.toLocaleString()}`]);
+        rows.push(['', '', 'Total', `shs:${totalSum.toLocaleString()}`, `shs:${profitSum.toLocaleString()}`]);
         let y = 16;
         doc.text('Recent Sales', 14, y);
         y += 8;

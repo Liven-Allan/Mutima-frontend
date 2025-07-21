@@ -7,14 +7,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     const data = await res.json();
     const months = data.months || [];
     if (!months.length) {
-      valueElem.textContent = '$0';
+      valueElem.textContent = 'shs:';
       if (changeElem) changeElem.innerHTML = '';
       return;
     }
     // Get the latest month (should be the current month if sorted)
     const latest = months[months.length - 1];
     const value = latest.total || 0;
-    valueElem.textContent = '$' + value.toLocaleString();
+    valueElem.textContent = 'shs:' + value.toLocaleString();
     // Calculate percentage change from previous month
     if (changeElem) {
       if (months.length < 2) {
@@ -61,7 +61,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       const currData = await currRes.json();
       const currValue = currData.totalCost || 0;
       const percent = currData.percentChange || 0;
-      invValueElem.textContent = '$' + currValue.toLocaleString();
+      invValueElem.textContent = 'shs:' + currValue.toLocaleString();
       // Use backend percentChange for display
       if (invChangeElem) {
         const rounded = Math.abs(percent).toFixed(1);
@@ -90,7 +90,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       const res = await fetch('http://localhost:5000/api/credit-customers/total-outstanding');
       const data = await res.json();
       const value = data.totalOutstanding || 0;
-      creditCostElem.textContent = '$' + value.toLocaleString();
+      creditCostElem.textContent = 'shs' + value.toLocaleString();
     } catch (err) {
       creditCostElem.textContent = 'N/A';
       console.error('Error fetching credit cost:', err);
@@ -112,7 +112,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const inventoryCostPageSize = 4;
 
   function formatCurrency(val) {
-    return '$' + (val || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return 'shs:' + (val || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   function renderInventoryCostTablePage() {
@@ -216,7 +216,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                 beginAtZero: true,
                 ticks: {
                   callback: function(value) {
-                    return '$' + value.toLocaleString();
+                    return 'shs:' + value.toLocaleString();
                   }
                 }
               }
@@ -358,7 +358,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     } else {
       pageItems.forEach(item => {
         const dateStr = item.expiry_date ? new Date(item.expiry_date).toISOString().slice(0, 10) : '';
-        const totalStr = '$' + (item.total || 0).toLocaleString();
+        const totalStr = 'shs:' + (item.total || 0).toLocaleString();
         expiringProductsTableBody.innerHTML += `<tr><td>${dateStr}</td><td>${item.name}</td><td>${item.total_quantity || 0}</td><td>${totalStr}</td></tr>`;
       });
     }

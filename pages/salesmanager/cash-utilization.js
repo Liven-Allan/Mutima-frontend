@@ -11,11 +11,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     const data = await response.json();
     const value = data.totalStockValue || 0;
     // Format as currency
-    valueElem.textContent = '$' + value.toLocaleString();
+    valueElem.textContent = 'shs:' + value.toLocaleString();
     // Store latest date for modal
     latestStockInventoryDate = data.latestDate || null;
   } catch (err) {
-    valueElem.textContent = 'N/A';
+    valueElem.textContent = '0';
     console.error('Error fetching stock inventory value:', err);
   }
 });
@@ -29,9 +29,9 @@ window.addEventListener('DOMContentLoaded', async () => {
       if (!response.ok) throw new Error('Failed to fetch');
       const data = await response.json();
       const value = data.totalExpenses || 0;
-      expensesElem.textContent = '$' + value.toLocaleString();
+      expensesElem.textContent = 'shs:' + value.toLocaleString();
     } catch (err) {
-      expensesElem.textContent = 'N/A';
+      expensesElem.textContent = '0';
       console.error('Error fetching today\'s expenses:', err);
     }
   }
@@ -52,9 +52,9 @@ window.addEventListener('DOMContentLoaded', async () => {
       const cashValue = cashData.totalCashAvailable || 0;
       const expensesValue = expensesData.totalExpenses || 0;
       const netValue = cashValue - expensesValue;
-      cashElem.textContent = '$' + netValue.toLocaleString();
+      cashElem.textContent = 'shs:' + netValue.toLocaleString();
     } catch (err) {
-      cashElem.textContent = 'N/A';
+      cashElem.textContent = '0';
       console.error('Error fetching net cash available:', err);
     }
   }
@@ -198,7 +198,7 @@ function renderExpensesTablePage() {
   }
 
   tbody.innerHTML = pageData.map(row =>
-    `<tr><td>${row.purpose}</td><td>$${row.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr>`
+    `<tr><td>${row.purpose}</td><td>shs${row.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr>`
   ).join('');
   showingText.textContent = `Showing ${startIdx + 1} to ${endIdx} of ${total} items`;
   pageInfo.textContent = `Page ${expensesCurrentPage} of ${totalPages}`;
@@ -313,7 +313,7 @@ function renderCashAvailableTablePage() {
   }
 
   tbody.innerHTML = pageData.map(row =>
-    `<tr><td>${row.customerName}</td><td>${row.items}</td><td>$${row.totalAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr>`
+    `<tr><td>${row.customerName}</td><td>${row.items}</td><td>shs:${row.totalAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr>`
   ).join('');
   showingText.textContent = `Showing ${startIdx + 1} to ${endIdx} of ${total} items`;
   pageInfo.textContent = `Page ${cashAvailableCurrentPage} of ${totalPages}`;
@@ -357,9 +357,9 @@ async function fetchAndRenderCashAvailableDetails(dateStr) {
   if (pageInfo) pageInfo.textContent = '';
   if (prevBtn) prevBtn.disabled = true;
   if (nextBtn) nextBtn.disabled = true;
-  if (totalSalesElem) totalSalesElem.textContent = '$0.00';
-  if (totalExpensesElem) totalExpensesElem.textContent = '$0.00';
-  if (netCashElem) netCashElem.textContent = '$0.00';
+  if (totalSalesElem) totalSalesElem.textContent = 'shs:0.00';
+  if (totalExpensesElem) totalExpensesElem.textContent = 'shs:0.00';
+  if (netCashElem) netCashElem.textContent = 'shs:0.00';
   try {
     const [salesRes, expensesRes] = await Promise.all([
       fetch(dateStr ? `http://localhost:5000/api/cash-available-details?date=${encodeURIComponent(dateStr)}` : 'http://localhost:5000/api/cash-available-details'),
@@ -375,18 +375,18 @@ async function fetchAndRenderCashAvailableDetails(dateStr) {
     const totalSales = cashAvailableDetailsData.reduce((sum, row) => sum + (row.totalAmount || 0), 0);
     const totalExpenses = (expensesData.details || []).reduce((sum, row) => sum + (row.amount || 0), 0);
     const netCash = totalSales - totalExpenses;
-    if (totalSalesElem) totalSalesElem.textContent = '$' + totalSales.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    if (totalExpensesElem) totalExpensesElem.textContent = '$' + totalExpenses.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    if (netCashElem) netCashElem.textContent = '$' + netCash.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (totalSalesElem) totalSalesElem.textContent = 'shs:' + totalSales.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (totalExpensesElem) totalExpensesElem.textContent = 'shs:' + totalExpenses.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (netCashElem) netCashElem.textContent = 'shs:' + netCash.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
   } catch (err) {
     tbody.innerHTML = '<tr><td colspan="3">Error loading data.</td></tr>';
     if (showingText) showingText.textContent = '';
     if (pageInfo) pageInfo.textContent = '';
     if (prevBtn) prevBtn.disabled = true;
     if (nextBtn) nextBtn.disabled = true;
-    if (totalSalesElem) totalSalesElem.textContent = 'N/A';
-    if (totalExpensesElem) totalExpensesElem.textContent = 'N/A';
-    if (netCashElem) netCashElem.textContent = 'N/A';
+    if (totalSalesElem) totalSalesElem.textContent = '0';
+    if (totalExpensesElem) totalExpensesElem.textContent = '0';
+    if (netCashElem) netCashElem.textContent = '0';
     console.error('Error fetching cash available details:', err);
   }
 }
@@ -460,7 +460,7 @@ async function renderCashFlowChart() {
             beginAtZero: true,
             ticks: {
               callback: function(value) {
-                return '$' + value.toLocaleString();
+                return 'shs:' + value.toLocaleString();
               }
             }
           }
@@ -488,9 +488,9 @@ async function updateFinancialReportTotalRevenue() {
       if (!response.ok) throw new Error('Failed to fetch');
       const data = await response.json();
       const value = data.totalRevenue || 0;
-      revenueElem.textContent = '$' + value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      revenueElem.textContent = 'shs:' + value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     } catch (err) {
-      revenueElem.textContent = 'N/A';
+      revenueElem.textContent = '0';
       console.error('Error fetching total revenue:', err);
     }
   }
@@ -510,9 +510,9 @@ async function updateFinancialReportTotalExpenses() {
       if (!response.ok) throw new Error('Failed to fetch');
       const data = await response.json();
       const value = data.totalExpenses || 0;
-      expensesElem.textContent = '$' + value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      expensesElem.textContent = 'shs:' + value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     } catch (err) {
-      expensesElem.textContent = 'N/A';
+      expensesElem.textContent = '0';
       console.error('Error fetching total expenses:', err);
     }
   }
@@ -531,9 +531,9 @@ async function updateFinancialReportNetProfit() {
       if (!response.ok) throw new Error('Failed to fetch');
       const data = await response.json();
       const value = data.netProfit || 0;
-      profitElem.textContent = '$' + value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      profitElem.textContent = 'shs:' + value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     } catch (err) {
-      profitElem.textContent = 'N/A';
+      profitElem.textContent = '0';
       console.error('Error fetching net profit:', err);
     }
   }
@@ -571,13 +571,13 @@ async function updateFinancialReportCardsForMonth(monthValue) {
     const revenueData = await revenueRes.json();
     const expensesData = await expensesRes.json();
     const profitData = await profitRes.json();
-    if (revenueElem) revenueElem.textContent = '$' + (revenueData.totalRevenue || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    if (expensesElem) expensesElem.textContent = '$' + (expensesData.totalExpenses || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    if (profitElem) profitElem.textContent = '$' + (profitData.netProfit || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (revenueElem) revenueElem.textContent = 'shs:' + (revenueData.totalRevenue || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (expensesElem) expensesElem.textContent = 'shs:' + (expensesData.totalExpenses || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (profitElem) profitElem.textContent = 'shs:' + (profitData.netProfit || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
   } catch (err) {
-    if (revenueElem) revenueElem.textContent = 'N/A';
-    if (expensesElem) expensesElem.textContent = 'N/A';
-    if (profitElem) profitElem.textContent = 'N/A';
+    if (revenueElem) revenueElem.textContent = '0';
+    if (expensesElem) expensesElem.textContent = '0';
+    if (profitElem) profitElem.textContent = '0';
     console.error('Error fetching financial report cards:', err);
   }
 }
@@ -732,7 +732,7 @@ async function renderProfitTrendLineChart() {
             beginAtZero: true,
             ticks: {
               callback: function(value) {
-                return '$' + value.toLocaleString();
+                return 'shs:' + value.toLocaleString();
               }
             }
           }
@@ -846,7 +846,7 @@ function renderTransactionHistoryTablePage(page) {
     tr.innerHTML = `
       <td><a href="#" class="text-decoration-underline">${sale.customerName || ''}</a></td>
       <td>${itemsStr}</td>
-      <td><span class="fw-bold text-success">$${amount.toLocaleString()}</span></td>
+      <td><span class="fw-bold text-success">shs:${amount.toLocaleString()}</span></td>
       <td>${paymentMethod}</td>
     `;
     tbody.appendChild(tr);
@@ -1008,8 +1008,8 @@ async function fetchAndRenderStockAnalysisTable() {
       tr.innerHTML = `
         <td><a href="#" class="text-decoration-underline text-primary">${item.name}</a></td>
         <td><span class="fw-bold">${item.currentStock}</span></td>
-        <td>$${Number(item.unitPrice).toLocaleString()}</td>
-        <td>$${Number(item.totalCost).toLocaleString()}</td>
+        <td>shs:${Number(item.unitPrice).toLocaleString()}</td>
+        <td>shs:${Number(item.totalCost).toLocaleString()}</td>
         <td>${item.lastReceived || '-'}</td>
       `;
       tbody.appendChild(tr);
@@ -1044,8 +1044,8 @@ function renderStockAnalysisTablePage(page) {
     tr.innerHTML = `
       <td><a href="#" class="text-decoration-underline text-primary">${item.name}</a></td>
       <td><span class="fw-bold">${item.currentStock}</span></td>
-      <td>$${Number(item.unitPrice).toLocaleString()}</td>
-      <td>$${Number(item.totalCost).toLocaleString()}</td>
+      <td>shs:${Number(item.unitPrice).toLocaleString()}</td>
+      <td>shs:${Number(item.totalCost).toLocaleString()}</td>
       <td>${item.lastReceived || '-'}</td>
     `;
     tbody.appendChild(tr);
@@ -1154,8 +1154,8 @@ function renderStockAnalysisTablePage(page) {
     tr.innerHTML = `
       <td><a href="#" class="text-decoration-underline text-primary">${item.name}</a></td>
       <td><span class="fw-bold">${item.currentStock}</span></td>
-      <td>$${Number(item.unitPrice).toLocaleString()}</td>
-      <td>$${Number(item.totalCost).toLocaleString()}</td>
+      <td>shs:${Number(item.unitPrice).toLocaleString()}</td>
+      <td>shs:${Number(item.totalCost).toLocaleString()}</td>
       <td>${item.lastReceived || '-'}</td>
     `;
     tbody.appendChild(tr);
@@ -1227,11 +1227,11 @@ async function renderTopStockValueBarChart() {
             beginAtZero: true,
             title: {
               display: true,
-              text: 'Cost ($)'
+              text: 'Cost (shs)'
             },
             ticks: {
               callback: function(value) {
-                return '$' + value.toLocaleString();
+                return 'shs:' + value.toLocaleString();
               }
             }
           },
@@ -1254,7 +1254,7 @@ async function renderTopStockValueBarChart() {
           tooltip: {
             callbacks: {
               label: function(context) {
-                return ' $' + context.parsed.y.toLocaleString();
+                return ' shs' + context.parsed.y.toLocaleString();
               }
             }
           }

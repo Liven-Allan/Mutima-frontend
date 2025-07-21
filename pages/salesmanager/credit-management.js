@@ -45,9 +45,9 @@ function renderCreditCustomersTable(customers) {
     // Format fields
     const name = customer.customer_name || '';
     const contact = customer.customer_phone ? `<i class="fas fa-phone-alt me-1 text-secondary"></i>${customer.customer_phone}` : '';
-    const outstanding = customer.balance !== undefined ? `<span class="fw-bold text-danger">$${customer.balance.toLocaleString()}</span>` : '';
+    const outstanding = customer.balance !== undefined ? `<span class="fw-bold text-danger">shs:${customer.balance.toLocaleString()}</span>` : '';
     const recentDate = customer.latest_transaction_date ? new Date(customer.latest_transaction_date).toISOString().split('T')[0] : '';
-    const recentAmount = customer.total_credit !== undefined ? `<span class="text-success">$${customer.total_credit.toLocaleString()}</span>` : '';
+    const recentAmount = customer.total_credit !== undefined ? `<span class="text-success">shs:${customer.total_credit.toLocaleString()}</span>` : '';
     let statusClass = 'bg-gradient-secondary';
     if (customer.status === 'Overdue') statusClass = 'bg-gradient-danger';
     else if (customer.status === 'Pending') statusClass = 'bg-gradient-warning';
@@ -138,7 +138,7 @@ function fetchAndRenderOutstandingCustomers() {
         // Only show customers with a positive balance
         if ((customer.balance || 0) > 0) {
           const name = customer.customer_name || '';
-          const amount = customer.balance !== undefined ? `<span class="fw-bold text-success">$${customer.balance.toLocaleString()}</span>` : '';
+          const amount = customer.balance !== undefined ? `<span class="fw-bold text-success">shs:${customer.balance.toLocaleString()}</span>` : '';
           tbody.innerHTML += `
             <tr>
               <td>${name}</td>
@@ -185,7 +185,7 @@ function fetchAndRenderOverdueCustomers() {
         // Only show customers with overdue balance (at least one transaction overdue)
         if ((customer.balance || 0) > 0 && customer.latest_transaction_date && customer.status === 'Overdue') {
           const name = customer.customer_name || '';
-          const amount = customer.balance !== undefined ? `<span class="fw-bold text-danger">$${customer.balance.toLocaleString()}</span>` : '';
+          const amount = customer.balance !== undefined ? `<span class="fw-bold text-danger">shs:${customer.balance.toLocaleString()}</span>` : '';
           tbody.innerHTML += `
             <tr>
               <td>${name}</td>
@@ -273,7 +273,7 @@ function renderCreditTransactionsTable(data) {
           <span class="text-secondary text-xs font-weight-bold">${repaymentDate}</span>
         </td>
         <td class="align-middle text-center">
-          <span class="text-secondary text-xs font-weight-bold">$${balance.toLocaleString()}</span>
+          <span class="text-secondary text-xs font-weight-bold">shs:${balance.toLocaleString()}</span>
         </td>
         <td class="align-middle text-center text-sm">
           <span class="${statusClass}">${status}</span>
@@ -413,7 +413,7 @@ if (creditTransactionsExportBtn) {
       html += `<td style='border:1px solid #ccc;padding:4px;'>${customerName}</td>`;
       html += `<td style='border:1px solid #ccc;padding:4px;'>${itemsDetails}</td>`;
       html += `<td style='border:1px solid #ccc;padding:4px;'>${repaymentDate}</td>`;
-      html += `<td style='border:1px solid #ccc;padding:4px;'>$${balance.toLocaleString()}</td>`;
+      html += `<td style='border:1px solid #ccc;padding:4px;'>shs:${balance.toLocaleString()}</td>`;
       html += `<td style='border:1px solid #ccc;padding:4px;'>${status}</td>`;
       html += `</tr>`;
     });
@@ -566,7 +566,7 @@ function renderRepaymentTrackingModal() {
         let status = 'pending';
         if (tx.payment_status === 'paid' || amount <= 0) status = 'completed';
         else if (tx.agreed_repayment_date && new Date(tx.agreed_repayment_date) < now) status = 'overdue';
-        let row = `<tr><td>${customerName}</td><td>${date}</td><td><span class='fw-bold text-${status === 'completed' ? 'success' : status === 'overdue' ? 'danger' : 'warning'}'>$${amount.toLocaleString()}</span></td></tr>`;
+        let row = `<tr><td>${customerName}</td><td>${date}</td><td><span class='fw-bold text-${status === 'completed' ? 'success' : status === 'overdue' ? 'danger' : 'warning'}'>shs:${amount.toLocaleString()}</span></td></tr>`;
         if (status === 'overdue') overdueTbody.innerHTML += row;
         else if (status === 'pending') pendingTbody.innerHTML += row;
         else completedTbody.innerHTML += row;

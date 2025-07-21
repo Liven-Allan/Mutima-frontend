@@ -239,7 +239,10 @@ window.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: 'rejected' })
         })
-          .then(() => fetchAndRenderPendingApprovals());
+          .then(() => {
+            fetchAndRenderPendingApprovals();
+            if (typeof fetchAndRenderRejectedUsers === 'function') fetchAndRenderRejectedUsers();
+          });
       });
     });
   }
@@ -410,7 +413,10 @@ window.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: 'rejected' })
               })
-                .then(() => refreshPendingAndActiveUsers());
+                .then(() => {
+                  refreshPendingAndActiveUsers();
+                  if (typeof fetchAndRenderRejectedUsers === 'function') fetchAndRenderRejectedUsers();
+                });
             });
           });
         })
@@ -565,7 +571,9 @@ window.addEventListener('DOMContentLoaded', () => {
             const modal = bootstrap.Modal.getInstance(editUserModal);
             if (modal) modal.hide();
             userIdToEdit = null;
-            fetchAndRenderActiveUsers();
+            // Refresh all tables after status update
+            if (typeof refreshPendingAndActiveUsers === 'function') refreshPendingAndActiveUsers();
+            if (typeof fetchAndRenderRejectedUsers === 'function') fetchAndRenderRejectedUsers();
           })
           .catch(() => {
             alert('Failed to update user.');
@@ -660,7 +668,9 @@ window.addEventListener('DOMContentLoaded', () => {
             const modal = bootstrap.Modal.getInstance(editUserModal);
             if (modal) modal.hide();
             rejectedUserIdToEdit = null;
-            fetchAndRenderRejectedUsers();
+            // Refresh all tables after status update
+            if (typeof refreshPendingAndActiveUsers === 'function') refreshPendingAndActiveUsers();
+            if (typeof fetchAndRenderRejectedUsers === 'function') fetchAndRenderRejectedUsers();
           })
           .catch(() => {
             alert('Failed to update user.');
