@@ -624,6 +624,8 @@
             if (modal) modal.hide();
             addRequestForm.reset();
             alert('Commodity request submitted successfully!');
+            // Reload the requests table so the new record appears immediately
+            loadCommodityRequests(1);
           } catch (err) {
             alert('Error submitting request: ' + err.message);
           }

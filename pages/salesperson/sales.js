@@ -241,10 +241,18 @@ async function saveSale() {
       // Refresh sales history and reset to page 1
       currentPage = 1;
       await loadSalesData();
-      
+      // Refresh items/inventory so the new quantity is reflected immediately
+      await loadItems();
+      // Reset inventory pagination to first page
+      weighableCurrentPage = 1;
+      unitCurrentPage = 1;
+      // Also refresh the inventory tables and await them
+      await fetchAndDisplayItems('weighable', 'weighableItemsTableBody');
+      await fetchAndDisplayItems('unit_based', 'unitItemsTableBody');
       // Close modal
       const modal = bootstrap.Modal.getInstance(document.getElementById('addNewSaleModal'));
       modal.hide();
+      return;
     } else {
       const error = await response.json();
       console.error('Server error:', error);
@@ -407,11 +415,20 @@ async function loadSalesData() {
 function displaySalesHistory() {
   const tableBody = document.getElementById('salesHistoryTableBody');
   
-  if (sales.length === 0) {
+  // Filter sales for today's date
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const filteredSales = sales.filter(sale => {
+    const saleDate = new Date(sale.date);
+    saleDate.setHours(0, 0, 0, 0);
+    return saleDate.getTime() === today.getTime();
+  });
+
+  if (filteredSales.length === 0) {
     tableBody.innerHTML = `
       <tr>
         <td colspan="5" class="text-center text-muted">
-          <i class="fas fa-inbox me-2"></i>No sales found
+          <i class="fas fa-inbox me-2"></i>No sales found for today
         </td>
       </tr>
     `;
@@ -419,11 +436,11 @@ function displaySalesHistory() {
     return;
   }
 
-  // Calculate pagination
-  totalPages = Math.ceil(sales.length / recordsPerPage);
+  // Calculate pagination for filtered sales
+  totalPages = Math.ceil(filteredSales.length / recordsPerPage);
   const startIndex = (currentPage - 1) * recordsPerPage;
-  const endIndex = Math.min(startIndex + recordsPerPage, sales.length);
-  const currentPageSales = sales.slice(startIndex, endIndex);
+  const endIndex = Math.min(startIndex + recordsPerPage, filteredSales.length);
+  const currentPageSales = filteredSales.slice(startIndex, endIndex);
 
   const salesHTML = currentPageSales.map(sale => {
     // Get customer name
@@ -481,8 +498,8 @@ function displaySalesHistory() {
           <span class="text-xs font-weight-bold">${totalAmount}</span>
         </td>
         <td class="align-middle text-center">
-          <button class="btn btn-link text-secondary mb-0" onclick="viewSaleDetails('${sale._id}')" title="View Details">
-            <i class="fa fa-eye text-xs"></i>
+          <button class="btn btn-link text-danger mb-0" onclick="deleteSale('${sale._id}')" title="Delete Sale">
+            <i class="fa fa-trash text-xs"></i>
           </button>
         </td>
       </tr>
@@ -492,17 +509,60 @@ function displaySalesHistory() {
   tableBody.innerHTML = salesHTML;
   
   // Update pagination info and controls
-  updatePaginationInfo(startIndex + 1, endIndex, sales.length);
+  updatePaginationInfo(startIndex + 1, endIndex, filteredSales.length);
   updatePaginationControls();
 }
 
-// View sale details (placeholder function)
-function viewSaleDetails(saleId) {
-  const sale = sales.find(s => s._id === saleId);
-  if (sale) {
-    alert(`Sale Details:\nInvoice: ${sale.invoice_number}\nCustomer: ${sale.customer_info ? sale.customer_info.name : 'Unknown'}\nTotal: $${sale.total_amount}`);
-  }
+
+// Add placeholder functions for delete
+
+let saleIdToDelete = null;
+
+function deleteSale(saleId) {
+  saleIdToDelete = saleId;
+  const modal = new bootstrap.Modal(document.getElementById('deleteSaleModal'));
+  modal.show();
 }
+
+// Attach event listener for the confirm delete button
+// Remove the old top-level event listener for confirmDeleteSaleBtn
+// Attach event listener for the confirm delete button after DOM is loaded
+
+document.addEventListener('DOMContentLoaded', function() {
+  const confirmDeleteSaleBtn = document.getElementById('confirmDeleteSaleBtn');
+  if (confirmDeleteSaleBtn) {
+    confirmDeleteSaleBtn.addEventListener('click', async function() {
+      if (!saleIdToDelete) return;
+      fetch(`http://localhost:5000/api/sales/${saleIdToDelete}`, {
+        method: 'DELETE'
+      })
+      .then(async res => {
+        if (res.ok) {
+          alert('Sale deleted and item quantities restored.');
+          currentPage = 1;
+          await loadSalesData();
+          await loadItems();
+          weighableCurrentPage = 1;
+          unitCurrentPage = 1;
+          await fetchAndDisplayItems('weighable', 'weighableItemsTableBody');
+          await fetchAndDisplayItems('unit_based', 'unitItemsTableBody');
+        } else {
+          const error = await res.json();
+          alert('Failed to delete sale: ' + (error.error || 'Unknown error'));
+        }
+        saleIdToDelete = null;
+        const modal = bootstrap.Modal.getInstance(document.getElementById('deleteSaleModal'));
+        if (modal) modal.hide();
+      })
+      .catch(err => {
+        alert('Failed to delete sale: ' + err.message);
+        saleIdToDelete = null;
+        const modal = bootstrap.Modal.getInstance(document.getElementById('deleteSaleModal'));
+        if (modal) modal.hide();
+      });
+    });
+  }
+});
 
 // Update pagination info and controls
 function updatePaginationInfo(startRecord, endRecord, totalRecords) {
@@ -787,15 +847,6 @@ unitNextBtn.addEventListener('click', function() {
       }
       const tr = document.createElement('tr');
       let actionButtons = `<button class="btn btn-sm btn-primary" onclick="onUpdateItem('${item._id}')">Update</button>`;
-      // Add Edit button logic
-      if (
-        mostRecentItem &&
-        item._id === mostRecentItem._id &&
-        item.updatedAt &&
-        (now - new Date(item.updatedAt).getTime()) <= 5 * 60 * 60 * 1000 // 5 hours in ms
-      ) {
-        actionButtons += `<br><button class="btn btn-sm btn-warning mt-2" onclick="onEditItem('${item._id}')">Edit</button>`;
-      }
       tr.innerHTML = `
         <td>${item.name || ''}</td>
         <td>${availableQty}</td>
@@ -832,6 +883,7 @@ try {
   console.error('Error fetching items:', error);
 }
 }
+window.fetchAndDisplayItems = fetchAndDisplayItems;
    
   function renderPaginatedItems(itemType) {
 let items, currentPage, totalPages, tableBodyId, startRecordId, endRecordId, totalRecordsId, currentPageInfoId, prevBtnId, nextBtnId;
@@ -1106,6 +1158,7 @@ updateItemForm.addEventListener('submit', function(event) {
         if (modal) modal.hide();
         fetchAndDisplayItems('weighable', 'weighableItemsTableBody');
         fetchAndDisplayItems('unit_based', 'unitItemsTableBody');
+        loadSecondaryInventoryAdjustments();
       } else {
         let errorMessage = result.error || 'Unknown error';
         if(result.details && result.details.errors) {
@@ -1131,225 +1184,282 @@ updateItemForm.addEventListener('submit', function(event) {
   }
 });
 
-// Edit item logic
-function onEditItem(itemId) {
-  fetch(`http://localhost:5000/api/items/${itemId}`)
-    .then(response => response.json())
-    .then(item => {
-      // Populate Item Information section
-      document.getElementById('editItemName').value = item.name || '';
-      // Populate Category dropdown
-      fetch('http://localhost:5000/api/categories')
-        .then(res => res.json())
-        .then(categories => {
-          const categorySelect = document.getElementById('editItemCategory');
-          categorySelect.innerHTML = '<option value="">Select category...</option>';
-          categories.forEach(category => {
-            const option = document.createElement('option');
-            option.value = category._id;
-            option.textContent = category.name;
-            if (item.category_id && (item.category_id._id ? item.category_id._id : item.category_id) === category._id) {
-              option.selected = true;
-            }
-            categorySelect.appendChild(option);
-          });
-        });
-      document.getElementById('editItemType').value = item.item_type || 'weighable';
-      document.getElementById('editItemBaseUnit').value = item.base_unit || 'kg';
-      // Populate Supplier Information section
-      if (item.supplier_id && typeof item.supplier_id === 'object') {
-        document.getElementById('editSupplierName').value = item.supplier_id.name || '';
-        document.getElementById('editSupplierContact').value = item.supplier_id.contact_info || '';
-      } else {
-        document.getElementById('editSupplierName').value = '';
-        document.getElementById('editSupplierContact').value = '';
-      }
-      // Populate Packaging & Stock Details section
-      document.getElementById('editItemExpiryDate').value = item.expiry_date ? item.expiry_date.split('T')[0] : '';
-      document.getElementById('editItemMinStock').value = item.minimum_stock || '';
-      // Populate Pricing section
-      document.getElementById('editItemPurchasePrice').value = item.purchase_price_per_package || '';
-      document.getElementById('editItemSellingPrice').value = item.selling_price_per_unit || '';
-      // Fetch InventoryStock for Initial No. of Packages
-      fetch(`http://localhost:5000/api/inventory-stock?item_id=${itemId}`)
-        .then(res => res.json())
-        .then(stock => {
-          // If stock is an array, get the first record
-          const stockRecord = Array.isArray(stock) ? stock[0] : stock;
-          const fullPackages = stockRecord && stockRecord.full_packages ? stockRecord.full_packages : '';
-          if (item.item_type === 'weighable') {
-            document.getElementById('editWeighableFields').style.display = 'block';
-            document.getElementById('editUnitBasedFields').style.display = 'none';
-            document.getElementById('editWeighablePackageUnit').value = item.package_unit || '';
-            document.getElementById('editWeighableWeightPerPackage').value = item.weight_per_package || '';
-            document.getElementById('editWeighableInitialPackages').value = fullPackages;
-            const weight = parseFloat(item.weight_per_package) || 0;
-            const packages = parseInt(fullPackages) || 0;
-            document.getElementById('editWeighableTotalWeight').value = (weight * packages) + ' ' + (item.base_unit || 'kg');
-          } else {
-            document.getElementById('editWeighableFields').style.display = 'none';
-            document.getElementById('editUnitBasedFields').style.display = 'block';
-            document.getElementById('editUnitPackageUnit').value = item.package_unit || '';
-            document.getElementById('editUnitUnitsPerPackage').value = item.units_per_package || '';
-            document.getElementById('editUnitInitialPackages').value = fullPackages;
-            const units = parseInt(item.units_per_package) || 0;
-            const packages = parseInt(fullPackages) || 0;
-            const unitName = document.getElementById('editItemBaseUnit').options[document.getElementById('editItemBaseUnit').selectedIndex].text;
-            document.getElementById('editUnitTotalUnits').value = (units * packages) + ' ' + unitName;
-          }
-          editCalculateTotals();
-          // Show the modal
-          const modal = new bootstrap.Modal(document.getElementById('editItemModal'));
-          modal.show();
-          document.getElementById('editItemForm').setAttribute('data-item-id', itemId);
-        })
-        .catch(() => {
-          // fallback if stock fetch fails
-          if (item.item_type === 'weighable') {
-            document.getElementById('editWeighableInitialPackages').value = item.initial_packages || '';
-          } else {
-            document.getElementById('editUnitInitialPackages').value = item.initial_packages || '';
-          }
-          editCalculateTotals();
-          const modal = new bootstrap.Modal(document.getElementById('editItemModal'));
-          modal.show();
-          document.getElementById('editItemForm').setAttribute('data-item-id', itemId);
-        });
-    })
-    .catch(error => {
-      alert('Failed to load item details: ' + error);
-    });
-}
-
-// Handle edit item form submit
-const editItemForm = document.getElementById('editItemForm');
-editItemForm && editItemForm.addEventListener('submit', async function(event) {
-  event.preventDefault();
-  const itemId = editItemForm.getAttribute('data-item-id');
-  const formData = new FormData(editItemForm);
-  const data = {};
-  formData.forEach((value, key) => {
-    if (value) data[key] = value;
-  });
-  // Save the new value for Initial No. of Packages
-  let newFullPackages = null;
-  let totalQuantity = null;
-  if (data.item_type === 'weighable') {
-    newFullPackages = parseInt(document.getElementById('editWeighableInitialPackages').value) || 0;
-    // Get total weight (auto-calculated)
-    const totalWeightStr = document.getElementById('editWeighableTotalWeight').value;
-    totalQuantity = parseFloat(totalWeightStr) || (parseFloat(document.getElementById('editWeighableWeightPerPackage').value) * newFullPackages) || 0;
-  } else {
-    newFullPackages = parseInt(document.getElementById('editUnitInitialPackages').value) || 0;
-    // Get total units (auto-calculated)
-    const totalUnitsStr = document.getElementById('editUnitTotalUnits').value;
-    // Extract number from string like '100 bars'
-    totalQuantity = parseInt(totalUnitsStr) || (parseInt(document.getElementById('editUnitUnitsPerPackage').value) * newFullPackages) || 0;
-  }
-  try {
-    // Update the item as before
-    const itemResponse = await fetch(`http://localhost:5000/api/items/${itemId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    const result = await itemResponse.json();
-    if (result.message === 'Item updated successfully') {
-      // Now update InventoryStock full_packages and total_quantity
-      await fetch(`http://localhost:5000/api/inventory-stock/${itemId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ full_packages: newFullPackages, total_quantity: totalQuantity }),
-      });
-      alert('Item edited successfully!');
-      const modal = bootstrap.Modal.getInstance(document.getElementById('editItemModal'));
-      if (modal) modal.hide();
-      fetchAndDisplayItems('weighable', 'weighableItemsTableBody');
-      fetchAndDisplayItems('unit_based', 'unitItemsTableBody');
-    } else {
-      let errorMessage = result.error || 'Unknown error';
-      if(result.details && result.details.errors) {
-        const errors = Object.values(result.details.errors).map(e => e.message).join('\n');
-        errorMessage += ':\n' + errors;
-      } else if (result.details) {
-        errorMessage += ': ' + JSON.stringify(result.details);
-      }
-      alert('Error editing item: \n' + errorMessage);
-    }
-  } catch (error) {
-    console.error('Error:', error);
-    alert('An error occurred while editing the item.');
-  }
-});
-
-// Edit calculation logic for edit modal
-function editCalculateTotals() {
-  const itemType = document.getElementById('editItemType').value;
-  const purchasePrice = parseFloat(document.getElementById('editItemPurchasePrice').value) || 0;
-  const sellingPrice = parseFloat(document.getElementById('editItemSellingPrice').value) || 0;
-  let initialPackages = 0;
-  let totalQuantity = 0;
-  let totalCost = 0;
-  let totalRevenue = 0;
-  
-  if (itemType === 'weighable') {
-    const weightPerPackage = parseFloat(document.getElementById('editWeighableWeightPerPackage').value) || 0;
-    initialPackages = parseInt(document.getElementById('editWeighableInitialPackages').value) || 0;
-    totalQuantity = weightPerPackage * initialPackages;
-    document.getElementById('editWeighableTotalWeight').value = totalQuantity ? (totalQuantity + ' ' + document.getElementById('editItemBaseUnit').value) : '';
-    totalCost = initialPackages * purchasePrice;
-    totalRevenue = sellingPrice * totalQuantity;
-  } else {
-    const unitsPerPackage = parseInt(document.getElementById('editUnitUnitsPerPackage').value) || 0;
-    initialPackages = parseInt(document.getElementById('editUnitInitialPackages').value) || 0;
-    totalQuantity = unitsPerPackage * initialPackages;
-    const unitName = document.getElementById('editItemBaseUnit').options[document.getElementById('editItemBaseUnit').selectedIndex].text;
-    document.getElementById('editUnitTotalUnits').value = totalQuantity ? (totalQuantity + ' ' + unitName + (totalQuantity === 1 ? '' : 's')) : '';
-    totalCost = initialPackages * purchasePrice;
-    totalRevenue = sellingPrice * totalQuantity;
-  }
-  
-  document.getElementById('editItemTotalCost').value = totalCost ? ('$' + totalCost.toFixed(2)) : '';
-  document.getElementById('editItemTotalRevenue').value = totalRevenue ? ('$' + totalRevenue.toFixed(2)) : '';
-}
-
-// Ensure editCalculateTotals is called on input for all relevant edit modal fields
-['editWeighableWeightPerPackage', 'editWeighableInitialPackages', 'editItemPurchasePrice', 'editItemSellingPrice', 'editUnitUnitsPerPackage', 'editUnitInitialPackages'].forEach(function(id) {
-  var el = document.getElementById(id);
-  if (el) {
-    el.addEventListener('input', editCalculateTotals);
-  }
-});
-
-// Add event listeners for edit modal item type and base unit changes
+// Export Sales History as PDF
 document.addEventListener('DOMContentLoaded', function() {
-  const editItemTypeSelect = document.getElementById('editItemType');
-  const editBaseUnitSelect = document.getElementById('editItemBaseUnit');
-  
-  if (editItemTypeSelect) {
-    editItemTypeSelect.addEventListener('change', function() {
-      const itemType = this.value;
-      const editWeighableFields = document.getElementById('editWeighableFields');
-      const editUnitBasedFields = document.getElementById('editUnitBasedFields');
-      
-      if (itemType === 'weighable') {
-        editWeighableFields.style.display = 'block';
-        editUnitBasedFields.style.display = 'none';
-      } else {
-        editWeighableFields.style.display = 'none';
-        editUnitBasedFields.style.display = 'block';
+  const exportBtn = document.getElementById('exportSalesHistoryBtn');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', function() {
+      // Filter today's sales (same logic as displaySalesHistory)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const filteredSales = sales.filter(sale => {
+        const saleDate = new Date(sale.date);
+        saleDate.setHours(0, 0, 0, 0);
+        return saleDate.getTime() === today.getTime();
+      });
+
+      if (filteredSales.length === 0) {
+        alert('No sales found for today to export.');
+        return;
       }
-      editCalculateTotals();
+
+      // Prepare table data
+      const headers = [['Customer', 'Items', 'Date', 'Total']];
+      const rows = filteredSales.map(sale => {
+        // Customer name
+        let customerName = 'Unknown Customer';
+        if (sale.customer_id && sale.customer_id.name) {
+          customerName = sale.customer_id.name;
+        } else if (sale.customer_info && sale.customer_info.name) {
+          customerName = sale.customer_info.name;
+        } else if (sale.customer_info && sale.customer_info.gender) {
+          customerName = sale.customer_info.gender;
+        }
+        // Items
+        let itemsList = [];
+        if (sale.items && sale.items.length > 0) {
+          itemsList = sale.items.map(item => {
+            const itemName = item.item_id ? item.item_id.name : 'Unknown Item';
+            const quantity = item.quantity_sold;
+            const unit = item.item_id ? item.item_id.base_unit : '';
+            return `${itemName} (${quantity} ${unit})`;
+          });
+        }
+        // Date
+        const saleDate = new Date(sale.date).toLocaleDateString();
+        // Total
+        const totalAmount = parseFloat(sale.total_amount).toLocaleString('en-US', {
+          style: 'currency',
+          currency: 'USD'
+        });
+        return [
+          customerName,
+          itemsList.join(', '),
+          saleDate,
+          totalAmount
+        ];
+      });
+
+      // Generate PDF
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.text('Sales History - ' + today.toISOString().split('T')[0], 14, 14);
+      doc.autoTable({
+        head: headers,
+        body: rows,
+        startY: 20,
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [26, 115, 232] }
+      });
+      doc.save('sales_history_' + today.toISOString().split('T')[0] + '.pdf');
     });
-  }
-  
-  if (editBaseUnitSelect) {
-    editBaseUnitSelect.addEventListener('change', editCalculateTotals);
   }
 });
 
-// Edit item logic
+// --- Secondary Inventory Integration ---
+const secondaryInventoryRecordsPerPage = 4;
+let secondaryWeighableCurrentPage = 1;
+let secondaryWeighableTotalPages = 1;
+let secondaryWeighableAdjustmentsCache = [];
+let secondaryUnitCurrentPage = 1;
+let secondaryUnitTotalPages = 1;
+let secondaryUnitAdjustmentsCache = [];
+
+// Fetch all inventory adjustments from backend
+async function fetchInventoryAdjustments() {
+  try {
+    const response = await fetch('http://localhost:5000/api/inventory-adjustments');
+    const data = await response.json();
+    return data.adjustments || [];
+  } catch (error) {
+    console.error('Error fetching inventory adjustments:', error);
+    return [];
+  }
+}
+
+// Render adjustments in the secondary inventory tables
+function renderAdjustmentsTable(adjustments, tableBodyId) {
+  const tbody = document.getElementById(tableBodyId);
+  tbody.innerHTML = '';
+  if (!adjustments.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No records found</td></tr>';
+    return;
+  }
+  adjustments.forEach(adj => {
+    const item = adj.item_id || {};
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${item.name || ''}</td>
+      <td>${adj.quantity}</td>
+      <td>${item.base_unit || ''}</td>
+      <td>${adj.adjustment_date ? new Date(adj.adjustment_date).toLocaleDateString() : ''}</td>
+      <td class="align-middle text-center">
+        <button class="btn btn-link text-danger mb-0 secondary-delete-adjustment-btn" data-id="${adj._id}" data-item-id="${item._id}" data-qty="${adj.quantity}" title="Delete">
+          <i class="fa fa-trash text-xs"></i>
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+  // Attach event listeners for delete buttons
+  tbody.querySelectorAll('.secondary-delete-adjustment-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const id = this.getAttribute('data-id');
+      const itemId = this.getAttribute('data-item-id');
+      const qty = this.getAttribute('data-qty');
+      deleteInventoryAdjustment(id, itemId, qty);
+    });
+  });
+}
+
+let adjustmentToDeleteId = null;
+let adjustmentToDeleteItemId = null;
+let adjustmentToDeleteQuantity = null;
+
+function deleteInventoryAdjustment(adjustmentId, itemId, quantity) {
+  adjustmentToDeleteId = adjustmentId;
+  adjustmentToDeleteItemId = itemId;
+  adjustmentToDeleteQuantity = quantity;
+  const modal = new bootstrap.Modal(document.getElementById('deleteAdjustmentModal'));
+  modal.show();
+}
+
+// Attach confirm delete handler
+document.addEventListener('DOMContentLoaded', function() {
+  const confirmDeleteAdjustmentBtn = document.getElementById('confirmDeleteAdjustmentBtn');
+  if (confirmDeleteAdjustmentBtn) {
+    confirmDeleteAdjustmentBtn.addEventListener('click', async function() {
+      if (!adjustmentToDeleteId || !adjustmentToDeleteItemId) return;
+      try {
+        // 1. Delete the adjustment
+        const response = await fetch(`http://localhost:5000/api/inventory-adjustments/${adjustmentToDeleteId}`, {
+          method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to delete adjustment');
+        // 2. Reduce the item quantity
+        // (Assume backend handles this automatically, but if not, send a PATCH/PUT to update item)
+        // 3. Refresh both tables
+        await loadSecondaryInventoryAdjustments();
+        await fetchAndDisplayItems('weighable', 'weighableItemsTableBody');
+        await fetchAndDisplayItems('unit_based', 'unitItemsTableBody');
+        // 4. Hide modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('deleteAdjustmentModal'));
+        if (modal) modal.hide();
+      } catch (err) {
+        alert('Error deleting adjustment: ' + err.message);
+      } finally {
+        adjustmentToDeleteId = null;
+        adjustmentToDeleteItemId = null;
+        adjustmentToDeleteQuantity = null;
+      }
+    });
+  }
+});
+
+// Paginate and render for weighable/unit_based
+function renderSecondaryPaginatedAdjustments(itemType) {
+  let adjustments, currentPage, totalPages, tableBodyId, startRecordId, endRecordId, totalRecordsId, currentPageInfoId, prevBtnId, nextBtnId;
+  if (itemType === 'weighable') {
+    adjustments = secondaryWeighableAdjustmentsCache;
+    currentPage = secondaryWeighableCurrentPage;
+    totalPages = secondaryWeighableTotalPages;
+    tableBodyId = 'secondaryWeighableItemsTableBody';
+    startRecordId = 'secondaryWeighableStartRecord';
+    endRecordId = 'secondaryWeighableEndRecord';
+    totalRecordsId = 'secondaryWeighableTotalRecords';
+    currentPageInfoId = 'secondaryWeighableCurrentPageInfo';
+    prevBtnId = 'secondaryWeighablePrevPage';
+    nextBtnId = 'secondaryWeighableNextPage';
+  } else {
+    adjustments = secondaryUnitAdjustmentsCache;
+    currentPage = secondaryUnitCurrentPage;
+    totalPages = secondaryUnitTotalPages;
+    tableBodyId = 'secondaryUnitItemsTableBody';
+    startRecordId = 'secondaryUnitStartRecord';
+    endRecordId = 'secondaryUnitEndRecord';
+    totalRecordsId = 'secondaryUnitTotalRecords';
+    currentPageInfoId = 'secondaryUnitCurrentPageInfo';
+    prevBtnId = 'secondaryUnitPrevPage';
+    nextBtnId = 'secondaryUnitNextPage';
+  }
+  const startIndex = (currentPage - 1) * secondaryInventoryRecordsPerPage;
+  const endIndex = Math.min(startIndex + secondaryInventoryRecordsPerPage, adjustments.length);
+  const currentAdjustments = adjustments.slice(startIndex, endIndex);
+  renderAdjustmentsTable(currentAdjustments, tableBodyId);
+  document.getElementById(startRecordId).innerText = adjustments.length === 0 ? 0 : startIndex + 1;
+  document.getElementById(endRecordId).innerText = endIndex;
+  document.getElementById(totalRecordsId).innerText = adjustments.length;
+  document.getElementById(currentPageInfoId).innerText = `Page ${currentPage} of ${totalPages}`;
+  document.getElementById(prevBtnId).disabled = currentPage <= 1;
+  document.getElementById(nextBtnId).disabled = currentPage >= totalPages;
+}
+
+// Load and cache adjustments for both types
+async function loadSecondaryInventoryAdjustments() {
+  const allAdjustments = await fetchInventoryAdjustments();
+  // Get today's date in YYYY-MM-DD
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const todayStr = `${yyyy}-${mm}-${dd}`;
+  // Filter by item_type and current date
+  secondaryWeighableAdjustmentsCache = allAdjustments.filter(adj => {
+    if (!(adj.item_id && adj.item_id.item_type === 'weighable')) return false;
+    if (!adj.adjustment_date) return false;
+    const adjDate = new Date(adj.adjustment_date);
+    const adjStr = `${adjDate.getFullYear()}-${String(adjDate.getMonth() + 1).padStart(2, '0')}-${String(adjDate.getDate()).padStart(2, '0')}`;
+    return adjStr === todayStr;
+  });
+  secondaryUnitAdjustmentsCache = allAdjustments.filter(adj => {
+    if (!(adj.item_id && adj.item_id.item_type === 'unit_based')) return false;
+    if (!adj.adjustment_date) return false;
+    const adjDate = new Date(adj.adjustment_date);
+    const adjStr = `${adjDate.getFullYear()}-${String(adjDate.getMonth() + 1).padStart(2, '0')}-${String(adjDate.getDate()).padStart(2, '0')}`;
+    return adjStr === todayStr;
+  });
+  secondaryWeighableTotalPages = Math.ceil(secondaryWeighableAdjustmentsCache.length / secondaryInventoryRecordsPerPage) || 1;
+  secondaryUnitTotalPages = Math.ceil(secondaryUnitAdjustmentsCache.length / secondaryInventoryRecordsPerPage) || 1;
+  renderSecondaryPaginatedAdjustments('weighable');
+}
+
+// Tab click handlers for secondary inventory
+const secondaryWeighableTab = document.querySelector('[href="#secondaryWeighable"]');
+const secondaryUnitTab = document.querySelector('[href="#secondaryUnit"]');
+if (secondaryWeighableTab) secondaryWeighableTab.addEventListener('click', function() {
+  renderSecondaryPaginatedAdjustments('weighable');
+});
+if (secondaryUnitTab) secondaryUnitTab.addEventListener('click', function() {
+  renderSecondaryPaginatedAdjustments('unit_based');
+});
+// Pagination controls for secondary inventory
+const secondaryWeighablePrevBtn = document.getElementById('secondaryWeighablePrevPage');
+const secondaryWeighableNextBtn = document.getElementById('secondaryWeighableNextPage');
+if (secondaryWeighablePrevBtn) secondaryWeighablePrevBtn.addEventListener('click', function() {
+  if (secondaryWeighableCurrentPage > 1) {
+    secondaryWeighableCurrentPage--;
+    renderSecondaryPaginatedAdjustments('weighable');
+  }
+});
+if (secondaryWeighableNextBtn) secondaryWeighableNextBtn.addEventListener('click', function() {
+  if (secondaryWeighableCurrentPage < secondaryWeighableTotalPages) {
+    secondaryWeighableCurrentPage++;
+    renderSecondaryPaginatedAdjustments('weighable');
+  }
+});
+const secondaryUnitPrevBtn = document.getElementById('secondaryUnitPrevPage');
+const secondaryUnitNextBtn = document.getElementById('secondaryUnitNextPage');
+if (secondaryUnitPrevBtn) secondaryUnitPrevBtn.addEventListener('click', function() {
+  if (secondaryUnitCurrentPage > 1) {
+    secondaryUnitCurrentPage--;
+    renderSecondaryPaginatedAdjustments('unit_based');
+  }
+});
+if (secondaryUnitNextBtn) secondaryUnitNextBtn.addEventListener('click', function() {
+  if (secondaryUnitCurrentPage < secondaryUnitTotalPages) {
+    secondaryUnitCurrentPage++;
+    renderSecondaryPaginatedAdjustments('unit_based');
+  }
+});
+// On page load, fetch and render weighable adjustments by default
+loadSecondaryInventoryAdjustments();

@@ -211,21 +211,14 @@
               </div>
             </div>
             <div class="card-body px-0 pb-2">
-              <div class="d-flex justify-content-between align-items-center px-4 py-3">
-                <button class="btn btn-outline-primary btn-sm">
-                  <i class="fas fa-calendar me-2"></i>Filter Date
+              <div class="d-flex justify-content-end align-items-center px-4 py-3">
+                <button class="btn btn-primary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#addNewSaleModal" >
+                  <i class="fas fa-plus me-2"></i>Add New Sale
                 </button>
-                <div>
-                  <button class="btn btn-primary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#addNewSaleModal" >
-                    <i class="fas fa-plus me-2"></i>Add New Sale
-                  </button>
-                  <button class="btn btn-outline-secondary btn-sm me-2" onclick="refreshSalesHistory()">
-                    <i class="fas fa-sync-alt me-2"></i>Refresh
-                  </button>
-                  <button class="btn btn-outline-secondary btn-sm">
-                    <i class="fas fa-file-export me-2"></i>Export
-                  </button>
-                </div>
+                
+                <button class="btn btn-outline-secondary btn-sm" id="exportSalesHistoryBtn">
+                  <i class="fas fa-file-export me-2"></i>Export
+                </button>
               </div>
               <div class="table-responsive">
                 <table class="table align-items-center mb-0" id="salesHistoryTable">
@@ -264,7 +257,7 @@
         </div>
       </div>
 
-      <!-- Inventory Items Section -->
+      <!-- Inventory Items Section (Original) -->
       <div class="row">
         <div class="col-12">
           <div class="card mb-4">
@@ -278,16 +271,16 @@
                 <div class="col-6">
                   <button class="btn bg-gradient-primary" data-bs-toggle="modal" data-bs-target="#addNewItemModal">
                     <i class="fas fa-plus me-2"></i>Add New Item
-                        </button>
-                          </div>
+                  </button>
+                </div>
                 <div class="col-6 d-flex justify-content-end">
                   <div class="input-group input-group-outline me-3" style="width: 250px; height: 45px;">
                     <span class="input-group-text"><i class="fas fa-search"></i></span>
                     <input type="text" class="form-control" placeholder="Search Item">
-                        </div>
+                  </div>
                   <button class="btn bg-gradient-secondary">
                     <i class="fas fa-file-export me-2"></i>Export
-                        </button>
+                  </button>
                 </div>
               </div>
 
@@ -330,23 +323,23 @@
                         </tr>
                       </thead>
                       <tbody id="weighableItemsTableBody"></tbody>
-                </table>
-                <div class="d-flex justify-content-between align-items-center mt-3 px-4" id="weighablePaginationControls">
-  <div class="text-sm text-muted">
-    Showing <span id="weighableStartRecord">0</span> to <span id="weighableEndRecord">0</span> of <span id="weighableTotalRecords">0</span> items
-  </div>
-  <div class="d-flex align-items-center">
-    <button class="btn btn-sm btn-outline-secondary me-2" id="weighablePrevPage" disabled>
-      <i class="fas fa-chevron-left"></i>
-    </button>
-    <span class="badge bg-primary px-3 py-2" id="weighableCurrentPageInfo">Page 1</span>
-    <button class="btn btn-sm btn-outline-secondary ms-2" id="weighableNextPage" disabled>
-      <i class="fas fa-chevron-right"></i>
-    </button>
-  </div>
-</div>
-              </div>
-            </div>
+                    </table>
+                    <div class="d-flex justify-content-between align-items-center mt-3 px-4" id="weighablePaginationControls">
+                      <div class="text-sm text-muted">
+                        Showing <span id="weighableStartRecord">0</span> to <span id="weighableEndRecord">0</span> of <span id="weighableTotalRecords">0</span> items
+                      </div>
+                      <div class="d-flex align-items-center">
+                        <button class="btn btn-sm btn-outline-secondary me-2" id="weighablePrevPage" disabled>
+                          <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <span class="badge bg-primary px-3 py-2" id="weighableCurrentPageInfo">Page 1</span>
+                        <button class="btn btn-sm btn-outline-secondary ms-2" id="weighableNextPage" disabled>
+                          <i class="fas fa-chevron-right"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
                 <!-- Unit-Based Goods Tab -->
                 <div class="tab-pane fade" id="unit" role="tabpanel">
@@ -366,23 +359,144 @@
                       </thead>
                       <tbody id="unitItemsTableBody"></tbody>
                     </table>
-                  <div class="d-flex justify-content-between align-items-center mt-3 px-4" id="unitPaginationControls">
-  <div class="text-sm text-muted">
-    Showing <span id="unitStartRecord">0</span> to <span id="unitEndRecord">0</span> of <span id="unitTotalRecords">0</span> items
-  </div>
-  <div class="d-flex align-items-center">
-    <button class="btn btn-sm btn-outline-secondary me-2" id="unitPrevPage" disabled>
-      <i class="fas fa-chevron-left"></i>
-    </button>
-    <span class="badge bg-primary px-3 py-2" id="unitCurrentPageInfo">Page 1</span>
-    <button class="btn btn-sm btn-outline-secondary ms-2" id="unitNextPage" disabled>
-      <i class="fas fa-chevron-right"></i>
-    </button>
-  </div>
-</div>
+                    <div class="d-flex justify-content-between align-items-center mt-3 px-4" id="unitPaginationControls">
+                      <div class="text-sm text-muted">
+                        Showing <span id="unitStartRecord">0</span> to <span id="unitEndRecord">0</span> of <span id="unitTotalRecords">0</span> items
+                      </div>
+                      <div class="d-flex align-items-center">
+                        <button class="btn btn-sm btn-outline-secondary me-2" id="unitPrevPage" disabled>
+                          <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <span class="badge bg-primary px-3 py-2" id="unitCurrentPageInfo">Page 1</span>
+                        <button class="btn btn-sm btn-outline-secondary ms-2" id="unitNextPage" disabled>
+                          <i class="fas fa-chevron-right"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+      <!-- Inventory Items Section (Secondary) -->
+      <div class="row">
+        <div class="col-12">
+          <div class="card mb-4">
+            <div class="card-header pb-0">
+              <h4>Secondary Inventory</h4>
+              <p class="text-sm text-secondary mb-0">Manage your store's secondary inventory items and stock levels</p>
+            </div>
+            <div class="card-body">
+              <!-- Action Buttons -->
+              <div class="row mb-4">
+                <div class="col-6">
+                  <button class="btn bg-gradient-primary" data-bs-toggle="modal" data-bs-target="#addNewItemModal">
+                    <i class="fas fa-plus me-2"></i>Add New Item
+                  </button>
+                </div>
+                <div class="col-6 d-flex justify-content-end">
+                  <div class="input-group input-group-outline me-3" style="width: 250px; height: 45px;">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" placeholder="Search Item">
+                  </div>
+                  <button class="btn bg-gradient-secondary">
+                    <i class="fas fa-file-export me-2"></i>Export
+                  </button>
+                </div>
+              </div>
+
+              <!-- Category Selection -->
+              <div class="row mb-4">
+                <div class="col-12">
+                  <div class="nav-wrapper position-relative end-0">
+                    <ul class="nav nav-pills nav-fill p-1" role="tablist">
+                      <li class="nav-item">
+                        <a class="nav-link mb-0 px-0 py-1 active" data-bs-toggle="tab" href="#secondaryWeighable" role="tab" aria-controls="secondaryWeighable" aria-selected="true">
+                          <span class="ms-1">Weighable Goods</span>
+                        </a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link mb-0 px-0 py-1" data-bs-toggle="tab" href="#secondaryUnit" role="tab" aria-controls="secondaryUnit" aria-selected="false">
+                          <span class="ms-1">Unit-Based Goods</span>
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tab Content -->
+              <div class="tab-content">
+                <!-- Weighable Goods Tab -->
+                <div class="tab-pane fade show active" id="secondaryWeighable" role="tabpanel">
+                  <h5 class="mb-2">Weighable Goods Inventory</h5>
+                  <p class="text-sm text-secondary mb-3">Manage Items sold by weight</p>
+                  <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                      <thead>
+                        <tr>
+                          <th>Item</th>
+                          <th>Available Quantity</th>
+                          <th>Base Unit</th>
+                          <th>Adjustment Date</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody id="secondaryWeighableItemsTableBody"></tbody>
+                    </table>
+                    <div class="d-flex justify-content-between align-items-center mt-3 px-4" id="secondaryWeighablePaginationControls">
+                      <div class="text-sm text-muted">
+                        Showing <span id="secondaryWeighableStartRecord">0</span> to <span id="secondaryWeighableEndRecord">0</span> of <span id="secondaryWeighableTotalRecords">0</span> items
+                      </div>
+                      <div class="d-flex align-items-center">
+                        <button class="btn btn-sm btn-outline-secondary me-2" id="secondaryWeighablePrevPage" disabled>
+                          <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <span class="badge bg-primary px-3 py-2" id="secondaryWeighableCurrentPageInfo">Page 1</span>
+                        <button class="btn btn-sm btn-outline-secondary ms-2" id="secondaryWeighableNextPage" disabled>
+                          <i class="fas fa-chevron-right"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Unit-Based Goods Tab -->
+                <div class="tab-pane fade" id="secondaryUnit" role="tabpanel">
+                  <h5 class="mb-2">Unit-Based Goods Inventory</h5>
+                  <p class="text-sm text-secondary mb-3">Manage Items sold by Unit Quantity</p>
+                  <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                      <thead>
+                        <tr>
+                          <th>Item</th>
+                          <th>Available Quantity</th>
+                          <th>Base Unit</th>
+                          <th>Adjustment Date</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody id="secondaryUnitItemsTableBody"></tbody>
+                    </table>
+                    <div class="d-flex justify-content-between align-items-center mt-3 px-4" id="secondaryUnitPaginationControls">
+                      <div class="text-sm text-muted">
+                        Showing <span id="secondaryUnitStartRecord">0</span> to <span id="secondaryUnitEndRecord">0</span> of <span id="secondaryUnitTotalRecords">0</span> items
+                      </div>
+                      <div class="d-flex align-items-center">
+                        <button class="btn btn-sm btn-outline-secondary me-2" id="secondaryUnitPrevPage" disabled>
+                          <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <span class="badge bg-primary px-3 py-2" id="secondaryUnitCurrentPageInfo">Page 1</span>
+                        <button class="btn btn-sm btn-outline-secondary ms-2" id="secondaryUnitNextPage" disabled>
+                          <i class="fas fa-chevron-right"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1556,6 +1670,45 @@
   </div>
 
   <script src="sales.js"></script>
+  <!-- Delete Sale Modal -->
+  <div class="modal fade" id="deleteSaleModal" tabindex="-1" aria-labelledby="deleteSaleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteSaleModalLabel"><i class="fas fa-trash-alt text-danger me-2"></i>Confirm Delete</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to delete this sale? This will restore the item quantities involved.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmDeleteSaleBtn">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- jsPDF and autoTable for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.0/jspdf.plugin.autotable.min.js"></script>
+  <!-- Delete Inventory Adjustment Modal -->
+  <div class="modal fade" id="deleteAdjustmentModal" tabindex="-1" aria-labelledby="deleteAdjustmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteAdjustmentModalLabel"><i class="fas fa-trash-alt text-danger me-2"></i>Confirm Delete</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to delete this inventory adjustment? This action cannot be undone.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmDeleteAdjustmentBtn">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 
 </html> 

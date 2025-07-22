@@ -184,7 +184,7 @@
           <p class="text-xs font-weight-bold mb-0">${selectedCreditItem.stockLevel} ${selectedCreditItem.unit}</p>
         </td>
         <td class="align-middle text-center">
-          <span class="text-xs font-weight-bold">$${selectedCreditItem.unitPrice.toFixed(2)}</span>
+          <span class="text-xs font-weight-bold">shs:${selectedCreditItem.unitPrice.toFixed(2)}</span>
         </td>
         <td class="align-middle text-center">
           <input type="number" class="form-control form-control-sm" 
@@ -197,7 +197,7 @@
                  style="width: 80px;">
         </td>
         <td class="align-middle text-center">
-          <span class="text-xs font-weight-bold" id="creditItemTotal${creditItemCount}">$${selectedCreditItem.unitPrice.toFixed(2)}</span>
+          <span class="text-xs font-weight-bold" id="creditItemTotal${creditItemCount}">shs:${selectedCreditItem.unitPrice.toFixed(2)}</span>
         </td>
         <td class="align-middle text-center">
           <button class="btn btn-link text-danger mb-0" onclick="removeCreditItem(${creditItemCount})">
@@ -379,6 +379,8 @@
         modal.hide();
         // Reset form
         resetCreditSaleForm();
+        // Reload the Customer Credit Accounts table so the new record appears immediately
+        refreshCreditAccounts();
         return; // Prevent further execution and double popup
       } catch (error) {
         alert('Error saving credit sale. Please try again.');
@@ -533,7 +535,7 @@
         document.getElementById('paymentCustomerName').textContent = customer.name;
         document.getElementById('paymentCustomerContact').textContent = customer.phone || customer.email || 'No contact';
         const summary = customerCreditDetails.credit_summary;
-        document.getElementById('totalOrderBalance').value = `$${summary.total_order_balance.toFixed(2)}`;
+        document.getElementById('totalOrderBalance').value = `shs:${summary.total_order_balance.toFixed(2)}`;
         document.getElementById('creditTime').value = summary.credit_time;
         populateOutstandingCreditSalesTable();
       } catch (error) {
@@ -547,10 +549,10 @@
       selectedPaymentCustomer = null;
       customerCreditDetails = null;
       document.getElementById('selectedPaymentCustomerDetails').style.display = 'none';
-      document.getElementById('totalOrderBalance').value = '$0.00';
+      document.getElementById('totalOrderBalance').value = 'shs:';
       document.getElementById('creditTime').value = '-';
       document.getElementById('outstandingCreditSalesTableBody').innerHTML = '';
-      document.getElementById('totalSelectedAmount').textContent = '$0.00';
+      document.getElementById('totalSelectedAmount').textContent = 'shs:';
       selectedRows.clear();
     }
 
@@ -586,8 +588,8 @@
         tbody.innerHTML += `
           <tr>
             <td>${sale.date}</td>
-            <td>$${sale.total_amount.toFixed(2)}</td>
-            <td class="${statusClass}">$${sale.amount_due.toFixed(2)}</td>
+            <td>shs:${sale.total_amount.toFixed(2)}</td>
+            <td class="${statusClass}">shs:${sale.amount_due.toFixed(2)}</td>
             <td class="text-center">
               <input type="checkbox" data-sale-id="${sale.id}" data-total-amount="${sale.total_amount}" onchange="updateTotalSelectedAmount()">
             </td>
@@ -627,7 +629,7 @@
         total += customerCreditDetails.outstanding_sales[idx].amount_due;
       });
       
-      document.getElementById('totalSelectedAmount').textContent = `$${total.toFixed(2)}`;
+      document.getElementById('totalSelectedAmount').textContent = `shs:${total.toFixed(2)}`;
     }
 
     // Payment form logic with backend integration
@@ -678,7 +680,7 @@
         const totalSelected = selectedSales.reduce((sum, sale) => sum + sale.amount_due, 0);
         
         if (amountPaid > totalSelected) {
-          alert(`Amount paid ($${amountPaid.toFixed(2)}) cannot exceed total selected amount ($${totalSelected.toFixed(2)})`);
+          alert(`Amount paid (shs:${amountPaid.toFixed(2)}) cannot exceed total selected amount (shs:${totalSelected.toFixed(2)})`);
           return;
         }
         
@@ -711,7 +713,7 @@
         const result = await response.json();
         
         // Show success message
-        alert(`Payment recorded successfully!\nAmount: $${amountPaid.toFixed(2)}\nRepayments created: ${result.repayments_count}`);
+        alert(`Payment recorded successfully!\nAmount: shs:${amountPaid.toFixed(2)}\nRepayments created: ${result.repayments_count}`);
         
       // Reset modal
       resetRecordPaymentModal();
@@ -871,13 +873,13 @@
     function populateViewAccountsModal() {
       // Customer summary
       document.getElementById('viewAccountCustomerName').textContent = viewAccountData.customer.name;
-      document.getElementById('viewAccountCurrentBalance').textContent = `$${viewAccountData.customer.currentBalance.toLocaleString(undefined, {minimumFractionDigits:2})}`;
+      document.getElementById('viewAccountCurrentBalance').textContent = `shs:${viewAccountData.customer.currentBalance.toLocaleString(undefined, {minimumFractionDigits:2})}`;
       const overdueElem = document.getElementById('viewAccountOverdue');
       if (viewAccountData.customer.overdue > 0) {
-        overdueElem.textContent = `Overdue: $${viewAccountData.customer.overdue.toLocaleString(undefined, {minimumFractionDigits:2})}`;
+        overdueElem.textContent = `Overdue: shs:${viewAccountData.customer.overdue.toLocaleString(undefined, {minimumFractionDigits:2})}`;
         overdueElem.classList.add('text-danger');
       } else {
-        overdueElem.textContent = 'Overdue: $0.00';
+        overdueElem.textContent = 'Overdue: shs:';
         overdueElem.classList.remove('text-danger');
       }
       // Transaction history
@@ -909,8 +911,8 @@
         tbody.innerHTML += `
           <tr onclick="showTransactionDetail(${start+idx})">
             <td>${tx.date}</td>
-            <td>$${tx.total.toFixed(2)}</td>
-            <td>$${tx.paid.toFixed(2)}</td>
+            <td>shs:${tx.total.toFixed(2)}</td>
+            <td>shs:${tx.paid.toFixed(2)}</td>
             <td class="${statusClass}">${tx.status}</td>
             <td>${tx.dueDate}</td>
           </tr>
@@ -938,7 +940,7 @@
     }
     function showTransactionDetail(idx) {
       const tx = viewAccountData.transactions[idx];
-      alert(`Transaction Detail\nDate: ${tx.date}\nTotal: $${tx.total.toFixed(2)}\nPaid: $${tx.paid.toFixed(2)}\nStatus: ${tx.status}\nDue Date: ${tx.dueDate}`);
+      alert(`Transaction Detail\nDate: ${tx.date}\nTotal: shs:${tx.total.toFixed(2)}\nPaid: shs:${tx.paid.toFixed(2)}\nStatus: ${tx.status}\nDue Date: ${tx.dueDate}`);
     }
     function populateRepaymentSchedule() {
       // Upcoming
@@ -947,7 +949,7 @@
       viewAccountData.upcoming.forEach(up => {
         upcomingList.innerHTML += `<li class="list-group-item d-flex justify-content-between align-items-center">
           <span><i class="fas fa-arrow-circle-right text-success me-2"></i>Due: <strong>${up.dueDate}</strong></span>
-          <span class="fw-bold">$${up.amount.toFixed(2)}</span>
+          <span class="fw-bold">shs:${up.amount.toFixed(2)}</span>
           <span class="badge bg-secondary">${up.status}</span>
         </li>`;
       });
@@ -959,11 +961,11 @@
         totalOverdue += od.amount;
         overdueList.innerHTML += `<li class="list-group-item d-flex justify-content-between align-items-center">
           <span><i class="fas fa-exclamation-circle text-danger me-2"></i>Due: <strong>${od.dueDate}</strong> <span class="overdue-priority ms-2">[${od.priority} Priority]</span></span>
-          <span class="fw-bold text-danger">$${od.amount.toFixed(2)}</span>
+          <span class="fw-bold text-danger">shs:${od.amount.toFixed(2)}</span>
           <span class="badge bg-danger">Overdue by ${od.overdueDays} days</span>
         </li>`;
       });
-      document.getElementById('totalOverdueAmount').textContent = `$${totalOverdue.toFixed(2)}`;
+      document.getElementById('totalOverdueAmount').textContent = `shs:${totalOverdue.toFixed(2)}`;
     }
     // Reset modal on show
     document.addEventListener('DOMContentLoaded', function() {
@@ -1110,13 +1112,13 @@
               </div>
             </td>
             <td>
-              <p class="text-xs font-weight-bold mb-0">$${account.total_credit.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+              <p class="text-xs font-weight-bold mb-0">shs:${account.total_credit.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
             </td>
             <td class="align-middle text-center text-sm">
-              <span class="text-secondary text-xs font-weight-bold">$${account.amount_paid.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+              <span class="text-secondary text-xs font-weight-bold">shs:${account.amount_paid.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
             </td>
             <td class="align-middle text-center">
-              <span class="text-secondary text-xs font-weight-bold">$${account.balance.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+              <span class="text-secondary text-xs font-weight-bold">shs:${account.balance.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
             </td>
             <td class="align-middle text-center">
               <span class="text-secondary text-xs font-weight-bold">${lastPaymentDate}</span>
@@ -1215,7 +1217,7 @@ document.getElementById('creditCustomerTypePayment').addEventListener('change', 
       document.getElementById('recordPaymentBtn').disabled = true; // Disable while loading
       if (!customerId) {
         // Reset summary and table
-        document.getElementById('totalOrderBalance').value = '$0.00';
+        document.getElementById('totalOrderBalance').value = 'shs:';
         document.getElementById('creditTime').value = '-';
         document.getElementById('outstandingCreditSalesTableBody').innerHTML = '';
         selectedPaymentCustomer = null;
@@ -1229,7 +1231,7 @@ document.getElementById('creditCustomerTypePayment').addEventListener('change', 
         const data = await response.json();
         // Calculate total order balance as sum of all amount_due
         const totalOrderBalance = (data.outstanding_sales || []).reduce((sum, sale) => sum + (sale.amount_due || 0), 0);
-        document.getElementById('totalOrderBalance').value = `$${totalOrderBalance.toFixed(2)}`;
+        document.getElementById('totalOrderBalance').value = `shs:${totalOrderBalance.toFixed(2)}`;
         document.getElementById('creditTime').value = data.credit_summary.credit_time || '-';
         // Populate outstanding credit sales table
         const tbody = document.getElementById('outstandingCreditSalesTableBody');
@@ -1238,8 +1240,8 @@ document.getElementById('creditCustomerTypePayment').addEventListener('change', 
           tbody.innerHTML += `
             <tr>
               <td>${sale.date}</td>
-              <td>$${sale.total_amount.toFixed(2)}</td>
-              <td>$${sale.amount_due.toFixed(2)}</td>
+              <td>shs:${sale.total_amount.toFixed(2)}</td>
+              <td>shs:${sale.amount_due.toFixed(2)}</td>
               <td class="text-center"><input type="checkbox" data-sale-id="${sale.id}" data-amount-due="${sale.amount_due}" onchange="updateTotalSelectedAmount()"></td>
             </tr>
           `;
@@ -1254,9 +1256,9 @@ document.getElementById('creditCustomerTypePayment').addEventListener('change', 
         customerCreditDetails = data; // Set details
         document.getElementById('recordPaymentBtn').disabled = false; // Enable after loading
         // Reset total selected
-        document.getElementById('totalSelectedAmount').textContent = '$0.00';
+        document.getElementById('totalSelectedAmount').textContent = 'shs:';
       } catch (error) {
-        document.getElementById('totalOrderBalance').value = '$0.00';
+        document.getElementById('totalOrderBalance').value = 'shs:';
         document.getElementById('creditTime').value = '-';
         document.getElementById('outstandingCreditSalesTableBody').innerHTML = '<tr><td colspan="4" class="text-danger">Error loading credit details</td></tr>';
         selectedPaymentCustomer = null;
@@ -1281,7 +1283,7 @@ document.getElementById('creditCustomerTypePayment').addEventListener('change', 
           selectedRows.add(`outstandingRow${rowIndex}`);
         }
       });
-      document.getElementById('totalSelectedAmount').textContent = `$${total.toFixed(2)}`;
+      document.getElementById('totalSelectedAmount').textContent = `shs:${total.toFixed(2)}`;
     }
 
 // Add global creditItems array and loader
@@ -1403,9 +1405,9 @@ async function loadViewAccountCustomers() {
         const account = accounts.find(acc => acc.customer_id === customerId);
         if (account) {
           if (document.getElementById('viewAccountCustomerName')) document.getElementById('viewAccountCustomerName').textContent = account.customer_name;
-          if (document.getElementById('viewAccountCurrentBalance')) document.getElementById('viewAccountCurrentBalance').textContent = `$${(account.balance || 0).toLocaleString(undefined, {minimumFractionDigits:2})}`;
+          if (document.getElementById('viewAccountCurrentBalance')) document.getElementById('viewAccountCurrentBalance').textContent = `shs:${(account.balance || 0).toLocaleString(undefined, {minimumFractionDigits:2})}`;
           if (document.getElementById('viewAccountOverdue')) {
-            document.getElementById('viewAccountOverdue').textContent = `Overdue: $${(account.status === 'Overdue' ? account.balance : 0).toLocaleString(undefined, {minimumFractionDigits:2})}`;
+            document.getElementById('viewAccountOverdue').textContent = `Overdue: shs:${(account.status === 'Overdue' ? account.balance : 0).toLocaleString(undefined, {minimumFractionDigits:2})}`;
             if (account.status === 'Overdue') {
               document.getElementById('viewAccountOverdue').classList.add('text-danger');
             } else {
@@ -1430,8 +1432,8 @@ async function loadViewAccountCustomers() {
             txTbody.innerHTML += `
               <tr>
                 <td>${tx.transaction_date ? new Date(tx.transaction_date).toLocaleDateString() : ''}</td>
-                <td>$${(tx.total_amount || 0).toFixed(2)}</td>
-                <td>$${(paid).toFixed(2)}</td>
+                <td>shs:${(tx.total_amount || 0).toFixed(2)}</td>
+                <td>shs:${(paid).toFixed(2)}</td>
                 <td class="${statusClass}">${tx.payment_status ? tx.payment_status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : ''}</td>
                 <td>${tx.agreed_repayment_date ? new Date(tx.agreed_repayment_date).toLocaleDateString() : ''}</td>
               </tr>
@@ -1518,13 +1520,13 @@ let filteredCreditAccounts = null;
                 </div>
               </td>
               <td>
-                <p class="text-xs font-weight-bold mb-0">$${account.total_credit.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+                <p class="text-xs font-weight-bold mb-0">shs:${account.total_credit.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
               </td>
               <td class="align-middle text-center text-sm">
-                <span class="text-secondary text-xs font-weight-bold">$${account.amount_paid.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                <span class="text-secondary text-xs font-weight-bold">shs:${account.amount_paid.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
               </td>
               <td class="align-middle text-center">
-                <span class="text-secondary text-xs font-weight-bold">$${account.balance.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                <span class="text-secondary text-xs font-weight-bold">she:${account.balance.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
               </td>
               <td class="align-middle text-center">
                 <span class="text-secondary text-xs font-weight-bold">${lastPaymentDate}</span>

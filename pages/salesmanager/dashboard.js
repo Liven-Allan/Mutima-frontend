@@ -90,7 +90,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       const res = await fetch('http://localhost:5000/api/credit-customers/total-outstanding');
       const data = await res.json();
       const value = data.totalOutstanding || 0;
-      creditCostElem.textContent = 'shs' + value.toLocaleString();
+      creditCostElem.textContent = 'shs:' + value.toLocaleString();
     } catch (err) {
       creditCostElem.textContent = 'N/A';
       console.error('Error fetching credit cost:', err);
