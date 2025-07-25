@@ -134,6 +134,7 @@
       });
 
       const data = await response.json();
+      console.log('[DEBUG] Login response:', data); // Debug: log backend response
 
       if (response.ok) {
         if (!data.user || data.user.status !== 'active') {
@@ -141,16 +142,27 @@
           return;
         }
         alert('Login successful!');
+        // Store JWT token in localStorage
+        if (data.token) {
+          localStorage.setItem('authToken', data.token);
+          console.log('[DEBUG] Token stored in localStorage:', data.token); // Debug: log token storage
+        } else {
+          console.log('[DEBUG] No token received from backend.');
+        }
         // Redirect based on user role
         if (data.user.role === 'SalesManager') {
+          console.log('[DEBUG] Redirecting to salesmanager/dashboard.html');
           window.location.href = 'salesmanager/dashboard.html';
         } else if (data.user.role === 'SalesPerson') {
+          console.log('[DEBUG] Redirecting to salesperson/sales.html');
           window.location.href = 'salesperson/sales.html';
         } else {
+          console.log('[DEBUG] Redirecting to dashboard.html');
           window.location.href = 'dashboard.html'; // fallback
         }
       } else {
         alert(data.message || 'Login failed');
+        console.log('[DEBUG] Login failed:', data);
       }
     } catch (error) {
       console.error('Login error:', error);
