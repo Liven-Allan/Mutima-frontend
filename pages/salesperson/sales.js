@@ -1710,125 +1710,77 @@ function getStatusText(quantity, minimumStock) {
 
 // PDF Export functionality for secondary inventory
 function exportSecondaryInventoryToPDF() {
-  // Get the currently active tab
-  const activeTab = document.querySelector('.tab-pane.active');
-  let title = '';
-  let adjustments = [];
-  let headers = [];
+  console.log('exportSecondaryInventoryToPDF called');
   
-  if (activeTab && activeTab.id === 'secondaryWeighable') {
-    title = 'Secondary Weighable Goods Inventory Report';
-    adjustments = secondaryWeighableAdjustmentsCache || [];
-    headers = ['Item Name', 'Available Quantity', 'Base Unit', 'Adjustment Date'];
-  } else if (activeTab && activeTab.id === 'secondaryUnit') {
-    title = 'Secondary Unit-Based Goods Inventory Report';
-    adjustments = secondaryUnitAdjustmentsCache || [];
-    headers = ['Item Name', 'Available Quantity', 'Base Unit', 'Adjustment Date'];
-  } else {
-    alert('Please select a valid secondary inventory tab to export');
-    return;
-  }
+  // Get the currently active tab - try multiple approaches
+  let activeTab = document.querySelector('.tab-pane.active');
+  console.log('Active tab found:', activeTab);
+  console.log('Active tab ID:', activeTab ? activeTab.id : 'null');
   
-  if (!adjustments || adjustments.length === 0) {
-    alert('No adjustments to export. Please ensure data is loaded.');
-    return;
-  }
-  
-  // Create PDF document
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  
-  // Add title
-  doc.setFontSize(18);
-  doc.setFont('helvetica', 'bold');
-  doc.text(title, 20, 20);
-  
-  // Add date
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'normal');
-  const currentDate = new Date().toLocaleDateString();
-  doc.text(`Generated on: ${currentDate}`, 20, 30);
-  
-  // Prepare table data
-  const tableData = adjustments.map(adj => [
-    adj.item_id?.name || 'N/A',
-    adj.quantity || 'N/A',
-    adj.item_id?.base_unit || 'N/A',
-    adj.adjustment_date ? new Date(adj.adjustment_date).toLocaleDateString() : 'N/A'
-  ]);
-  
-  // Add table
-  doc.autoTable({
-    head: [headers],
-    body: tableData,
-    startY: 40,
-    styles: {
-      fontSize: 10,
-      cellPadding: 3
-    },
-    headStyles: {
-      fillColor: [41, 128, 185],
-      textColor: 255,
-      fontStyle: 'bold'
-    },
-    alternateRowStyles: {
-      fillColor: [245, 245, 245]
-    },
-    columnStyles: {
-      0: { cellWidth: 50 }, // Item Name
-      1: { cellWidth: 30 }, // Available Quantity
-      2: { cellWidth: 25 }, // Base Unit
-      3: { cellWidth: 35 }  // Adjustment Date
+  // If no active tab found, try to find it within the secondary inventory section
+  if (!activeTab || (!activeTab.id.includes('secondaryWeighable') && !activeTab.id.includes('secondaryUnit'))) {
+    console.log('Looking for secondary inventory tabs specifically...');
+    const secondaryWeighableTab = document.getElementById('secondaryWeighable');
+    const secondaryUnitTab = document.getElementById('secondaryUnit');
+    
+    if (secondaryWeighableTab && secondaryWeighableTab.classList.contains('active')) {
+      activeTab = secondaryWeighableTab;
+      console.log('Found active secondary weighable tab');
+    } else if (secondaryUnitTab && secondaryUnitTab.classList.contains('active')) {
+      activeTab = secondaryUnitTab;
+      console.log('Found active secondary unit tab');
+    } else {
+      // Try to find any active tab within the secondary inventory section
+      const secondaryTabs = document.querySelectorAll('#secondaryWeighable, #secondaryUnit');
+      for (const tab of secondaryTabs) {
+        if (tab.classList.contains('active') || tab.classList.contains('show')) {
+          activeTab = tab;
+          console.log('Found active secondary tab:', tab.id);
+          break;
+        }
+      }
     }
-  });
-  
-  // Add summary
-  const finalY = doc.lastAutoTable.finalY + 10;
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Summary:', 20, finalY);
-  
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`Total Adjustments: ${adjustments.length}`, 20, finalY + 10);
-  
-  // Save the PDF
-  const fileName = `${title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
-  doc.save(fileName);
-}
-
-// Add event listeners for export buttons
-document.addEventListener('DOMContentLoaded', function() {
-  const exportInventoryBtn = document.getElementById('exportInventoryBtn');
-  const exportSecondaryInventoryBtn = document.getElementById('exportSecondaryInventoryBtn');
-  
-  if (exportInventoryBtn) {
-    exportInventoryBtn.addEventListener('click', exportInventoryToPDF);
   }
   
-  if (exportSecondaryInventoryBtn) {
-    exportSecondaryInventoryBtn.addEventListener('click', exportSecondaryInventoryToPDF);
-  }
-});
-
-// PDF Export functionality for inventory items
-function exportInventoryToPDF() {
-  // Get the currently active tab
-  const activeTab = document.querySelector('.tab-pane.active');
+  console.log('Final active tab:', activeTab);
+  console.log('Final active tab ID:', activeTab ? activeTab.id : 'null');
+  
   let title = '';
   let items = [];
   let headers = [];
   
-  if (activeTab && activeTab.id === 'weighable') {
-    title = 'Weighable Goods Inventory Report';
-    items = weighableItemsCache || [];
-    headers = ['Item Name', 'Available Quantity', 'Base Unit', 'Selling Price/Unit', 'Status'];
-  } else if (activeTab && activeTab.id === 'unit') {
-    title = 'Unit-Based Goods Inventory Report';
-    items = unitItemsCache || [];
-    headers = ['Item Name', 'Available Quantity', 'Base Unit', 'Selling Price/Unit', 'Status'];
+  if (activeTab && activeTab.id === 'secondaryWeighable') {
+    title = 'Secondary Weighable Goods Inventory Report';
+    // Use the secondary weighable adjustments cache (the actual data being displayed)
+    const adjustments = secondaryWeighableAdjustmentsCache || [];
+    items = adjustments.map(adj => ({
+      name: adj.item_id?.name || 'N/A',
+      total_quantity: adj.quantity || 0,
+      base_unit: adj.item_id?.base_unit || 'N/A',
+      selling_price_per_unit: adj.item_id?.selling_price_per_unit || 0,
+      minimum_stock: adj.item_id?.minimum_stock || 0,
+      adjustment_date: adj.adjustment_date
+    }));
+    headers = ['Item Name', 'Available Quantity', 'Base Unit', 'Adjustment Date'];
+    console.log('Exporting secondary weighable adjustments:', items.length);
+  } else if (activeTab && activeTab.id === 'secondaryUnit') {
+    title = 'Secondary Unit-Based Goods Inventory Report';
+    // Use the secondary unit adjustments cache (the actual data being displayed)
+    const adjustments = secondaryUnitAdjustmentsCache || [];
+    items = adjustments.map(adj => ({
+      name: adj.item_id?.name || 'N/A',
+      total_quantity: adj.quantity || 0,
+      base_unit: adj.item_id?.base_unit || 'N/A',
+      selling_price_per_unit: adj.item_id?.selling_price_per_unit || 0,
+      minimum_stock: adj.item_id?.minimum_stock || 0,
+      adjustment_date: adj.adjustment_date
+    }));
+    headers = ['Item Name', 'Available Quantity', 'Base Unit', 'Adjustment Date'];
+    console.log('Exporting secondary unit adjustments:', items.length);
   } else {
-    alert('Please select a valid inventory tab to export');
+    console.error('No valid active tab found. Active tab:', activeTab);
+    console.error('Available tabs:', document.querySelectorAll('.tab-pane'));
+    alert('Please select a valid secondary inventory tab to export');
     return;
   }
   
@@ -1852,14 +1804,27 @@ function exportInventoryToPDF() {
   const currentDate = new Date().toLocaleDateString();
   doc.text(`Generated on: ${currentDate}`, 20, 30);
   
-  // Prepare table data
-  const tableData = items.map(item => [
-    item.name || 'N/A',
-    item.total_quantity !== undefined ? item.total_quantity.toString() : 'N/A',
-    item.base_unit || 'N/A',
-    item.selling_price_per_unit ? `shs: ${item.selling_price_per_unit.toFixed(2)}` : 'N/A',
-    getStatusText(item.total_quantity, item.minimum_stock)
-  ]);
+  // Prepare table data - handle both inventory items and adjustments
+  const tableData = items.map(item => {
+    if (item.adjustment_date) {
+      // This is adjustment data (secondary inventory)
+      return [
+        item.name || 'N/A',
+        item.total_quantity !== undefined ? item.total_quantity.toString() : 'N/A',
+        item.base_unit || 'N/A',
+        item.adjustment_date ? new Date(item.adjustment_date).toLocaleDateString() : 'N/A'
+      ];
+    } else {
+      // This is regular inventory data (main inventory)
+      return [
+        item.name || 'N/A',
+        item.total_quantity !== undefined ? item.total_quantity.toString() : 'N/A',
+        item.base_unit || 'N/A',
+        item.selling_price_per_unit ? `shs: ${item.selling_price_per_unit.toFixed(2)}` : 'N/A',
+        getStatusText(item.total_quantity, item.minimum_stock)
+      ];
+    }
+  });
   
   // Add table
   doc.autoTable({
@@ -1887,7 +1852,7 @@ function exportInventoryToPDF() {
     }
   });
   
-  // Add summary
+  // Add summary - handle both inventory items and adjustments
   const finalY = doc.lastAutoTable.finalY + 10;
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
@@ -1897,117 +1862,58 @@ function exportInventoryToPDF() {
   doc.setFont('helvetica', 'normal');
   doc.text(`Total Items: ${items.length}`, 20, finalY + 10);
   
-  const totalValue = items.reduce((sum, item) => {
-    const quantity = item.total_quantity || 0;
-    const price = item.selling_price_per_unit || 0;
-    return sum + (quantity * price);
-  }, 0);
-  
-  doc.text(`Total Inventory Value: shs: ${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 20, finalY + 20);
+  // Only calculate total value if we have selling price data (main inventory)
+  if (items.length > 0 && items[0].selling_price_per_unit !== undefined) {
+    const totalValue = items.reduce((sum, item) => {
+      const quantity = item.total_quantity || 0;
+      const price = item.selling_price_per_unit || 0;
+      return sum + (quantity * price);
+    }, 0);
+    
+    doc.text(`Total Inventory Value: shs: ${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 20, finalY + 20);
+  }
   
   // Save the PDF
   const fileName = `${title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
   doc.save(fileName);
 }
 
-// Helper function to get status text
-function getStatusText(quantity, minimumStock) {
-  if (!quantity || quantity === 0) {
-    return 'Out of Stock';
-  } else if (minimumStock && quantity <= minimumStock) {
-    return 'Low Stock';
-  } else {
-    return 'In Stock';
-  }
-}
+// Export button event listeners are now added in the main DOMContentLoaded event listener
 
-// PDF Export functionality for secondary inventory
-function exportSecondaryInventoryToPDF() {
-  // Get the currently active tab
-  const activeTab = document.querySelector('.tab-pane.active');
-  let title = '';
-  let adjustments = [];
-  let headers = [];
+// Test function for debugging secondary inventory export
+function testSecondaryInventoryExport() {
+  console.log('Testing secondary inventory export...');
   
-  if (activeTab && activeTab.id === 'secondaryWeighable') {
-    title = 'Secondary Weighable Goods Inventory Report';
-    adjustments = secondaryWeighableAdjustmentsCache || [];
-    headers = ['Item Name', 'Available Quantity', 'Base Unit', 'Adjustment Date'];
-  } else if (activeTab && activeTab.id === 'secondaryUnit') {
-    title = 'Secondary Unit-Based Goods Inventory Report';
-    adjustments = secondaryUnitAdjustmentsCache || [];
-    headers = ['Item Name', 'Available Quantity', 'Base Unit', 'Adjustment Date'];
-  } else {
-    alert('Please select a valid secondary inventory tab to export');
-    return;
-  }
+  // Check if the function exists
+  console.log('exportSecondaryInventoryToPDF function:', typeof exportSecondaryInventoryToPDF);
   
-  if (!adjustments || adjustments.length === 0) {
-    alert('No adjustments to export. Please ensure data is loaded.');
-    return;
-  }
+  // Check all tab panes
+  const allTabs = document.querySelectorAll('.tab-pane');
+  console.log('All tab panes:', allTabs);
   
-  // Create PDF document
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
+  // Check secondary inventory tabs specifically
+  const secondaryWeighableTab = document.getElementById('secondaryWeighable');
+  const secondaryUnitTab = document.getElementById('secondaryUnit');
+  console.log('Secondary weighable tab:', secondaryWeighableTab);
+  console.log('Secondary unit tab:', secondaryUnitTab);
   
-  // Add title
-  doc.setFontSize(18);
-  doc.setFont('helvetica', 'bold');
-  doc.text(title, 20, 20);
-  
-  // Add date
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'normal');
-  const currentDate = new Date().toLocaleDateString();
-  doc.text(`Generated on: ${currentDate}`, 20, 30);
-  
-  // Prepare table data
-  const tableData = adjustments.map(adj => [
-    adj.item_id?.name || 'N/A',
-    adj.quantity || 'N/A',
-    adj.item_id?.base_unit || 'N/A',
-    adj.adjustment_date ? new Date(adj.adjustment_date).toLocaleDateString() : 'N/A'
-  ]);
-  
-  // Add table
-  doc.autoTable({
-    head: [headers],
-    body: tableData,
-    startY: 40,
-    styles: {
-      fontSize: 10,
-      cellPadding: 3
-    },
-    headStyles: {
-      fillColor: [41, 128, 185],
-      textColor: 255,
-      fontStyle: 'bold'
-    },
-    alternateRowStyles: {
-      fillColor: [245, 245, 245]
-    },
-    columnStyles: {
-      0: { cellWidth: 50 }, // Item Name
-      1: { cellWidth: 30 }, // Available Quantity
-      2: { cellWidth: 25 }, // Base Unit
-      3: { cellWidth: 35 }  // Adjustment Date
-    }
+  // Check which tabs are active
+  allTabs.forEach(tab => {
+    console.log(`Tab ${tab.id}: active=${tab.classList.contains('active')}, show=${tab.classList.contains('show')}`);
   });
   
-  // Add summary
-  const finalY = doc.lastAutoTable.finalY + 10;
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Summary:', 20, finalY);
+  // Check if data is available
+  console.log('weighableItemsCache:', weighableItemsCache);
+  console.log('unitItemsCache:', unitItemsCache);
+  console.log('secondaryWeighableAdjustmentsCache:', secondaryWeighableAdjustmentsCache);
+  console.log('secondaryUnitAdjustmentsCache:', secondaryUnitAdjustmentsCache);
   
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`Total Adjustments: ${adjustments.length}`, 20, finalY + 10);
-  
-  // Save the PDF
-  const fileName = `${title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
-  doc.save(fileName);
+  // Try to call the export function
+  try {
+    exportSecondaryInventoryToPDF();
+  } catch (error) {
+    console.error('Error calling exportSecondaryInventoryToPDF:', error);
+  }
 }
 
 // Add event listeners for export buttons
