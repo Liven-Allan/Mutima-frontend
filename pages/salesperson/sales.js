@@ -1597,3 +1597,429 @@ if (secondaryUnitNextBtn) secondaryUnitNextBtn.addEventListener('click', functio
 });
 // On page load, fetch and render weighable adjustments by default
 loadSecondaryInventoryAdjustments();
+
+// PDF Export functionality for inventory items
+function exportInventoryToPDF() {
+  // Get the currently active tab
+  const activeTab = document.querySelector('.tab-pane.active');
+  let title = '';
+  let items = [];
+  let headers = [];
+  
+  if (activeTab && activeTab.id === 'weighable') {
+    title = 'Weighable Goods Inventory Report';
+    items = weighableItemsCache || [];
+    headers = ['Item Name', 'Available Quantity', 'Base Unit', 'Selling Price/Unit', 'Status'];
+  } else if (activeTab && activeTab.id === 'unit') {
+    title = 'Unit-Based Goods Inventory Report';
+    items = unitItemsCache || [];
+    headers = ['Item Name', 'Available Quantity', 'Base Unit', 'Selling Price/Unit', 'Status'];
+  } else {
+    alert('Please select a valid inventory tab to export');
+    return;
+  }
+  
+  if (!items || items.length === 0) {
+    alert('No items to export. Please ensure items are loaded.');
+    return;
+  }
+  
+  // Create PDF document
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  
+  // Add title
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text(title, 20, 20);
+  
+  // Add date
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'normal');
+  const currentDate = new Date().toLocaleDateString();
+  doc.text(`Generated on: ${currentDate}`, 20, 30);
+  
+  // Prepare table data
+  const tableData = items.map(item => [
+    item.name || 'N/A',
+    item.total_quantity !== undefined ? item.total_quantity.toString() : 'N/A',
+    item.base_unit || 'N/A',
+    item.selling_price_per_unit ? `shs: ${item.selling_price_per_unit.toFixed(2)}` : 'N/A',
+    getStatusText(item.total_quantity, item.minimum_stock)
+  ]);
+  
+  // Add table
+  doc.autoTable({
+    head: [headers],
+    body: tableData,
+    startY: 40,
+    styles: {
+      fontSize: 10,
+      cellPadding: 3
+    },
+    headStyles: {
+      fillColor: [41, 128, 185],
+      textColor: 255,
+      fontStyle: 'bold'
+    },
+    alternateRowStyles: {
+      fillColor: [245, 245, 245]
+    },
+    columnStyles: {
+      0: { cellWidth: 50 }, // Item Name
+      1: { cellWidth: 30 }, // Available Quantity
+      2: { cellWidth: 25 }, // Base Unit
+      3: { cellWidth: 35 }, // Selling Price/Unit
+      4: { cellWidth: 25 }  // Status
+    }
+  });
+  
+  // Add summary
+  const finalY = doc.lastAutoTable.finalY + 10;
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Summary:', 20, finalY);
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Total Items: ${items.length}`, 20, finalY + 10);
+  
+  const totalValue = items.reduce((sum, item) => {
+    const quantity = item.total_quantity || 0;
+    const price = item.selling_price_per_unit || 0;
+    return sum + (quantity * price);
+  }, 0);
+  
+  doc.text(`Total Inventory Value: shs: ${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 20, finalY + 20);
+  
+  // Save the PDF
+  const fileName = `${title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+  doc.save(fileName);
+}
+
+// Helper function to get status text
+function getStatusText(quantity, minimumStock) {
+  if (!quantity || quantity === 0) {
+    return 'Out of Stock';
+  } else if (minimumStock && quantity <= minimumStock) {
+    return 'Low Stock';
+  } else {
+    return 'In Stock';
+  }
+}
+
+// PDF Export functionality for secondary inventory
+function exportSecondaryInventoryToPDF() {
+  // Get the currently active tab
+  const activeTab = document.querySelector('.tab-pane.active');
+  let title = '';
+  let adjustments = [];
+  let headers = [];
+  
+  if (activeTab && activeTab.id === 'secondaryWeighable') {
+    title = 'Secondary Weighable Goods Inventory Report';
+    adjustments = secondaryWeighableAdjustmentsCache || [];
+    headers = ['Item Name', 'Available Quantity', 'Base Unit', 'Adjustment Date'];
+  } else if (activeTab && activeTab.id === 'secondaryUnit') {
+    title = 'Secondary Unit-Based Goods Inventory Report';
+    adjustments = secondaryUnitAdjustmentsCache || [];
+    headers = ['Item Name', 'Available Quantity', 'Base Unit', 'Adjustment Date'];
+  } else {
+    alert('Please select a valid secondary inventory tab to export');
+    return;
+  }
+  
+  if (!adjustments || adjustments.length === 0) {
+    alert('No adjustments to export. Please ensure data is loaded.');
+    return;
+  }
+  
+  // Create PDF document
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  
+  // Add title
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text(title, 20, 20);
+  
+  // Add date
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'normal');
+  const currentDate = new Date().toLocaleDateString();
+  doc.text(`Generated on: ${currentDate}`, 20, 30);
+  
+  // Prepare table data
+  const tableData = adjustments.map(adj => [
+    adj.item_id?.name || 'N/A',
+    adj.quantity || 'N/A',
+    adj.item_id?.base_unit || 'N/A',
+    adj.adjustment_date ? new Date(adj.adjustment_date).toLocaleDateString() : 'N/A'
+  ]);
+  
+  // Add table
+  doc.autoTable({
+    head: [headers],
+    body: tableData,
+    startY: 40,
+    styles: {
+      fontSize: 10,
+      cellPadding: 3
+    },
+    headStyles: {
+      fillColor: [41, 128, 185],
+      textColor: 255,
+      fontStyle: 'bold'
+    },
+    alternateRowStyles: {
+      fillColor: [245, 245, 245]
+    },
+    columnStyles: {
+      0: { cellWidth: 50 }, // Item Name
+      1: { cellWidth: 30 }, // Available Quantity
+      2: { cellWidth: 25 }, // Base Unit
+      3: { cellWidth: 35 }  // Adjustment Date
+    }
+  });
+  
+  // Add summary
+  const finalY = doc.lastAutoTable.finalY + 10;
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Summary:', 20, finalY);
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Total Adjustments: ${adjustments.length}`, 20, finalY + 10);
+  
+  // Save the PDF
+  const fileName = `${title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+  doc.save(fileName);
+}
+
+// Add event listeners for export buttons
+document.addEventListener('DOMContentLoaded', function() {
+  const exportInventoryBtn = document.getElementById('exportInventoryBtn');
+  const exportSecondaryInventoryBtn = document.getElementById('exportSecondaryInventoryBtn');
+  
+  if (exportInventoryBtn) {
+    exportInventoryBtn.addEventListener('click', exportInventoryToPDF);
+  }
+  
+  if (exportSecondaryInventoryBtn) {
+    exportSecondaryInventoryBtn.addEventListener('click', exportSecondaryInventoryToPDF);
+  }
+});
+
+// PDF Export functionality for inventory items
+function exportInventoryToPDF() {
+  // Get the currently active tab
+  const activeTab = document.querySelector('.tab-pane.active');
+  let title = '';
+  let items = [];
+  let headers = [];
+  
+  if (activeTab && activeTab.id === 'weighable') {
+    title = 'Weighable Goods Inventory Report';
+    items = weighableItemsCache || [];
+    headers = ['Item Name', 'Available Quantity', 'Base Unit', 'Selling Price/Unit', 'Status'];
+  } else if (activeTab && activeTab.id === 'unit') {
+    title = 'Unit-Based Goods Inventory Report';
+    items = unitItemsCache || [];
+    headers = ['Item Name', 'Available Quantity', 'Base Unit', 'Selling Price/Unit', 'Status'];
+  } else {
+    alert('Please select a valid inventory tab to export');
+    return;
+  }
+  
+  if (!items || items.length === 0) {
+    alert('No items to export. Please ensure items are loaded.');
+    return;
+  }
+  
+  // Create PDF document
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  
+  // Add title
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text(title, 20, 20);
+  
+  // Add date
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'normal');
+  const currentDate = new Date().toLocaleDateString();
+  doc.text(`Generated on: ${currentDate}`, 20, 30);
+  
+  // Prepare table data
+  const tableData = items.map(item => [
+    item.name || 'N/A',
+    item.total_quantity !== undefined ? item.total_quantity.toString() : 'N/A',
+    item.base_unit || 'N/A',
+    item.selling_price_per_unit ? `shs: ${item.selling_price_per_unit.toFixed(2)}` : 'N/A',
+    getStatusText(item.total_quantity, item.minimum_stock)
+  ]);
+  
+  // Add table
+  doc.autoTable({
+    head: [headers],
+    body: tableData,
+    startY: 40,
+    styles: {
+      fontSize: 10,
+      cellPadding: 3
+    },
+    headStyles: {
+      fillColor: [41, 128, 185],
+      textColor: 255,
+      fontStyle: 'bold'
+    },
+    alternateRowStyles: {
+      fillColor: [245, 245, 245]
+    },
+    columnStyles: {
+      0: { cellWidth: 50 }, // Item Name
+      1: { cellWidth: 30 }, // Available Quantity
+      2: { cellWidth: 25 }, // Base Unit
+      3: { cellWidth: 35 }, // Selling Price/Unit
+      4: { cellWidth: 25 }  // Status
+    }
+  });
+  
+  // Add summary
+  const finalY = doc.lastAutoTable.finalY + 10;
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Summary:', 20, finalY);
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Total Items: ${items.length}`, 20, finalY + 10);
+  
+  const totalValue = items.reduce((sum, item) => {
+    const quantity = item.total_quantity || 0;
+    const price = item.selling_price_per_unit || 0;
+    return sum + (quantity * price);
+  }, 0);
+  
+  doc.text(`Total Inventory Value: shs: ${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 20, finalY + 20);
+  
+  // Save the PDF
+  const fileName = `${title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+  doc.save(fileName);
+}
+
+// Helper function to get status text
+function getStatusText(quantity, minimumStock) {
+  if (!quantity || quantity === 0) {
+    return 'Out of Stock';
+  } else if (minimumStock && quantity <= minimumStock) {
+    return 'Low Stock';
+  } else {
+    return 'In Stock';
+  }
+}
+
+// PDF Export functionality for secondary inventory
+function exportSecondaryInventoryToPDF() {
+  // Get the currently active tab
+  const activeTab = document.querySelector('.tab-pane.active');
+  let title = '';
+  let adjustments = [];
+  let headers = [];
+  
+  if (activeTab && activeTab.id === 'secondaryWeighable') {
+    title = 'Secondary Weighable Goods Inventory Report';
+    adjustments = secondaryWeighableAdjustmentsCache || [];
+    headers = ['Item Name', 'Available Quantity', 'Base Unit', 'Adjustment Date'];
+  } else if (activeTab && activeTab.id === 'secondaryUnit') {
+    title = 'Secondary Unit-Based Goods Inventory Report';
+    adjustments = secondaryUnitAdjustmentsCache || [];
+    headers = ['Item Name', 'Available Quantity', 'Base Unit', 'Adjustment Date'];
+  } else {
+    alert('Please select a valid secondary inventory tab to export');
+    return;
+  }
+  
+  if (!adjustments || adjustments.length === 0) {
+    alert('No adjustments to export. Please ensure data is loaded.');
+    return;
+  }
+  
+  // Create PDF document
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  
+  // Add title
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text(title, 20, 20);
+  
+  // Add date
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'normal');
+  const currentDate = new Date().toLocaleDateString();
+  doc.text(`Generated on: ${currentDate}`, 20, 30);
+  
+  // Prepare table data
+  const tableData = adjustments.map(adj => [
+    adj.item_id?.name || 'N/A',
+    adj.quantity || 'N/A',
+    adj.item_id?.base_unit || 'N/A',
+    adj.adjustment_date ? new Date(adj.adjustment_date).toLocaleDateString() : 'N/A'
+  ]);
+  
+  // Add table
+  doc.autoTable({
+    head: [headers],
+    body: tableData,
+    startY: 40,
+    styles: {
+      fontSize: 10,
+      cellPadding: 3
+    },
+    headStyles: {
+      fillColor: [41, 128, 185],
+      textColor: 255,
+      fontStyle: 'bold'
+    },
+    alternateRowStyles: {
+      fillColor: [245, 245, 245]
+    },
+    columnStyles: {
+      0: { cellWidth: 50 }, // Item Name
+      1: { cellWidth: 30 }, // Available Quantity
+      2: { cellWidth: 25 }, // Base Unit
+      3: { cellWidth: 35 }  // Adjustment Date
+    }
+  });
+  
+  // Add summary
+  const finalY = doc.lastAutoTable.finalY + 10;
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Summary:', 20, finalY);
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Total Adjustments: ${adjustments.length}`, 20, finalY + 10);
+  
+  // Save the PDF
+  const fileName = `${title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+  doc.save(fileName);
+}
+
+// Add event listeners for export buttons
+document.addEventListener('DOMContentLoaded', function() {
+  const exportInventoryBtn = document.getElementById('exportInventoryBtn');
+  const exportSecondaryInventoryBtn = document.getElementById('exportSecondaryInventoryBtn');
+  
+  if (exportInventoryBtn) {
+    exportInventoryBtn.addEventListener('click', exportInventoryToPDF);
+  }
+  
+  if (exportSecondaryInventoryBtn) {
+    exportSecondaryInventoryBtn.addEventListener('click', exportSecondaryInventoryToPDF);
+  }
+});

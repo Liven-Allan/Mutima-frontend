@@ -1,6 +1,7 @@
 // Fetch and update Stock Inventory Value
 let latestStockInventoryDate = null;
-window.addEventListener('DOMContentLoaded', async () => {
+
+async function updateStockInventoryValue() {
   const valueElem = document.getElementById('stock-inventory-value');
   if (!valueElem) return;
 
@@ -18,7 +19,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     valueElem.textContent = '0';
     console.error('Error fetching stock inventory value:', err);
   }
-});
+}
+
+window.addEventListener('DOMContentLoaded', updateStockInventoryValue);
 
 // Fetch and update Today's Expenses
 window.addEventListener('DOMContentLoaded', async () => {
@@ -88,7 +91,7 @@ function renderStockInventoryTablePage() {
   }
 
   tbody.innerHTML = pageData.map(row =>
-    `<tr><td>${row.name}</td><td>${row.quantity.toLocaleString(undefined, {maximumFractionDigits: 2})}</td><td>$${row.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr>`
+    `<tr><td>${row.name}</td><td>${row.quantity.toLocaleString(undefined, {maximumFractionDigits: 2})}</td><td>shs:${row.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr>`
   ).join('');
   showingText.textContent = `Showing ${startIdx + 1} to ${endIdx} of ${total} items`;
   pageInfo.textContent = `Page ${stockInventoryCurrentPage} of ${totalPages}`;
@@ -153,6 +156,9 @@ async function fetchAndRenderInventoryDetails(dateStr) {
 const stockInventoryDetailsModal = document.getElementById('stockInventoryDetailsModal');
 if (stockInventoryDetailsModal) {
   stockInventoryDetailsModal.addEventListener('show.bs.modal', function () {
+    // Refresh the stock inventory value to ensure it's current
+    updateStockInventoryValue();
+    
     const dateInput = document.getElementById('stockInventoryDate');
     if (dateInput && latestStockInventoryDate) {
       dateInput.value = latestStockInventoryDate;
