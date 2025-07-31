@@ -34,6 +34,81 @@
   <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
   <!-- CSS Files -->
   <link id="pagestyle" href="../../assets/css/soft-ui-dashboard.css?v=1.1.0" rel="stylesheet" />
+  <style>
+    /* Ensure sidebar navigation is scrollable */
+    #sidenav-main .navbar-nav {
+      max-height: calc(100vh - 200px) !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+    }
+    
+    /* Ensure all nav items are visible */
+    #sidenav-main .nav-item {
+      display: block !important;
+    }
+    
+    /* Additional rules to ensure Item Loss menu is visible */
+    .sidenav .navbar-nav {
+      max-height: calc(100vh - 200px) !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+    }
+    
+    .sidenav .nav-item {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    
+    /* Force all navigation items to be visible */
+    .navbar-nav .nav-item {
+      display: block !important;
+      visibility: visible !important;
+    }
+    
+    /* Ensure the Item Loss specific menu item is visible */
+    .nav-item a[href*="item-loss"] {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    
+    /* Override any potential hiding styles */
+    .sidenav-main .navbar-nav .nav-item {
+      display: block !important;
+      height: auto !important;
+      min-height: auto !important;
+    }
+    
+    /* Fix layout for Item Loss menu item - ensure text is to the right of icon */
+    .nav-item a[href*="item-loss"] {
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      flex-wrap: nowrap !important;
+    }
+    
+    /* Ensure all nav links have proper flex layout */
+    .sidenav .nav-link {
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      flex-wrap: nowrap !important;
+    }
+    
+    /* Ensure icon and text are properly aligned */
+    .nav-link .icon {
+      flex-shrink: 0 !important;
+      margin-right: 0.5rem !important;
+    }
+    
+    .nav-link .nav-link-text {
+      flex: 1 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+  </style>
   <!-- Nepcha Analytics (nepcha.com) -->
   <!-- Nepcha is a easy-to-use web analytics. No cookies and fully compliant with GDPR, CCPA and PECR. -->
   <script defer data-site="YOUR_DOMAIN_HERE" src="https://api.nepcha.com/js/nepcha-analytics.js"></script>
@@ -59,7 +134,7 @@
     </div>
     <hr class="horizontal dark mt-0">
     <div class="collapse navbar-collapse  w-auto " id="sidenav-collapse-main">
-      <ul class="navbar-nav">
+      <ul class="navbar-nav" style="max-height: calc(100vh - 200px); overflow-y: auto;">
         <li class="nav-item">
           <a class="nav-link active" href="../salesmanager/dashboard.html">
             <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
@@ -86,6 +161,14 @@
               <i class="fas fa-boxes text-dark"></i>
             </div>
             <span class="nav-link-text ms-1">Inventory</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="../salesmanager/item-loss.html">
+            <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="fas fa-exclamation-triangle text-dark"></i>
+            </div>
+            <span class="nav-link-text ms-1">Item Loss</span>
           </a>
         </li>
         <li class="nav-item">

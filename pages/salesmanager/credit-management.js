@@ -166,6 +166,8 @@ function fetchOverdueAmount() {
       if (elem) {
         elem.textContent = data.totalOverdue !== undefined ? data.totalOverdue.toLocaleString() : '--';
       }
+      // Also update the overdue customers modal to ensure consistency
+      fetchAndRenderOverdueCustomers();
     })
     .catch(() => {
       const elem = document.getElementById('overdueAmount');
@@ -175,26 +177,91 @@ function fetchOverdueAmount() {
 
 // Fetch and render overdue customers in the modal
 function fetchAndRenderOverdueCustomers() {
-  fetch('http://localhost:5000/api/customer-credit-accounts')
+  fetch('http://localhost:5000/api/credit-transactions/all')
     .then(response => response.json())
     .then(data => {
       const now = new Date();
       const tbody = document.getElementById('overdueCustomerList');
       tbody.innerHTML = '';
-      data.forEach(customer => {
-        // Only show customers with overdue balance (at least one transaction overdue)
-        if ((customer.balance || 0) > 0 && customer.latest_transaction_date && customer.status === 'Overdue') {
-          const name = customer.customer_name || '';
-          const amount = customer.balance !== undefined ? `<span class="fw-bold text-danger">shs:${customer.balance.toLocaleString()}</span>` : '';
-          tbody.innerHTML += `
-            <tr>
-              <td>${name}</td>
-              <td>${amount}</td>
-            </tr>
-          `;
+      
+      // Group overdue transactions by customer
+      const customerOverdueMap = new Map();
+      let debugInfo = [];
+      
+      data.forEach(transaction => {
+        // Check if transaction is overdue (not paid and due date passed)
+        // Only include transactions that are actually overdue (past due date)
+        const dueDate = new Date(transaction.agreed_repayment_date);
+        const isOverdue = transaction.payment_status !== 'paid' && 
+                         transaction.agreed_repayment_date && 
+                         dueDate < now &&
+                         (transaction.total_amount || 0) > (transaction.amount_paid || 0);
+        
+        // Debug info
+        if (transaction.payment_status !== 'paid' && transaction.agreed_repayment_date) {
+          debugInfo.push({
+            customer: transaction.customer_id.name,
+            dueDate: dueDate.toISOString().split('T')[0],
+            isOverdue: isOverdue,
+            amount: (transaction.total_amount || 0) - (transaction.amount_paid || 0),
+            status: transaction.payment_status
+          });
+        }
+        
+        if (isOverdue) {
+          
+          const customerId = transaction.customer_id._id || transaction.customer_id;
+          const customerName = transaction.customer_id.name || 'Unknown Customer';
+          const overdueAmount = (transaction.total_amount || 0) - (transaction.amount_paid || 0);
+          
+          // Add to customer overdue map
+          if (customerOverdueMap.has(customerId)) {
+            customerOverdueMap.get(customerId).overdueAmount += overdueAmount;
+          } else {
+            customerOverdueMap.set(customerId, {
+              name: customerName,
+              overdueAmount: overdueAmount
+            });
+          }
         }
       });
-      if (tbody.innerHTML === '') {
+      
+      // Render the overdue customers
+      let totalOverdue = 0;
+      customerOverdueMap.forEach((customer, customerId) => {
+        const name = customer.name;
+        const amount = `<span class="fw-bold text-danger">shs:${customer.overdueAmount.toLocaleString()}</span>`;
+        totalOverdue += customer.overdueAmount;
+        
+        tbody.innerHTML += `
+          <tr>
+            <td>${name}</td>
+            <td>${amount}</td>
+          </tr>
+        `;
+      });
+      
+      // Add total row
+      if (customerOverdueMap.size > 0) {
+        tbody.innerHTML += `
+          <tr class="table-info">
+            <td class="fw-bold">Total Overdue</td>
+            <td class="fw-bold text-danger">shs:${totalOverdue.toLocaleString()}</td>
+          </tr>
+        `;
+      }
+      
+      // Debug logging
+      console.log('=== Overdue Transactions Debug ===');
+      console.log('Current date:', now.toISOString().split('T')[0]);
+      console.log('All unpaid transactions with due dates:');
+      debugInfo.forEach(info => {
+        console.log(`${info.customer}: Due ${info.dueDate}, Amount: ${info.amount}, Overdue: ${info.isOverdue}`);
+      });
+      console.log('Total overdue amount:', totalOverdue);
+      console.log('===============================');
+      
+      if (customerOverdueMap.size === 0) {
         tbody.innerHTML = '<tr><td colspan="2" class="text-center text-warning">No overdue customers found</td></tr>';
       }
     })
@@ -202,6 +269,34 @@ function fetchAndRenderOverdueCustomers() {
       const tbody = document.getElementById('overdueCustomerList');
       tbody.innerHTML = '<tr><td colspan="2" class="text-center text-danger">Failed to load data</td></tr>';
     });
+}
+
+// Verification function to check if card amount matches modal total
+function verifyOverdueAmountConsistency() {
+  const cardAmount = document.getElementById('overdueAmount');
+  const cardValue = cardAmount ? parseFloat(cardAmount.textContent.replace(/,/g, '')) : 0;
+  
+  // Calculate modal total
+  const overdueRows = document.querySelectorAll('#overdueCustomerList tr:not(.table-info)');
+  let modalTotal = 0;
+  
+  overdueRows.forEach(row => {
+    const amountCell = row.querySelector('td:last-child span');
+    if (amountCell) {
+      const amountText = amountCell.textContent.replace('shs:', '').replace(/,/g, '');
+      modalTotal += parseFloat(amountText) || 0;
+    }
+  });
+  
+  console.log('Card overdue amount:', cardValue);
+  console.log('Modal total overdue amount:', modalTotal);
+  
+  if (Math.abs(cardValue - modalTotal) > 0.01) {
+    console.warn('⚠️ Overdue amount mismatch detected!');
+    console.warn('Card shows:', cardValue, 'but modal total is:', modalTotal);
+  } else {
+    console.log('✅ Overdue amounts are consistent');
+  }
 }
 
 // --- Credit Transactions Pagination ---
@@ -649,3 +744,15 @@ document.addEventListener('DOMContentLoaded', () => {
 document.getElementById('viewCreditCustomersModal').addEventListener('show.bs.modal', fetchAndRenderCreditCustomers);
 document.getElementById('viewOutstandingDetailsModal').addEventListener('show.bs.modal', fetchAndRenderOutstandingCustomers);
 document.getElementById('viewOverdueAccountsModal').addEventListener('show.bs.modal', fetchAndRenderOverdueCustomers);
+
+  // Event listeners for modals
+  document.addEventListener('DOMContentLoaded', function() {
+    // Overdue accounts modal verification
+    const overdueModal = document.getElementById('viewOverdueAccountsModal');
+    if (overdueModal) {
+      overdueModal.addEventListener('shown.bs.modal', function() {
+        // Verify consistency after modal is shown
+        setTimeout(verifyOverdueAmountConsistency, 100);
+      });
+    }
+  });

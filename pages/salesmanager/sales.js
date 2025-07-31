@@ -529,6 +529,10 @@ document.getElementById('salesBargraphApplyBtn').addEventListener('click', funct
 });
 
 // --- Top Selling Items Logic ---
+let allTopSellingItems = [];
+let topSellingItemsModalCurrentPage = 1;
+const topSellingItemsModalPageSize = 8;
+
 async function fetchAndRenderTopSellingItems(year, month) {
   try {
     let url = 'http://localhost:5000/api/sales/top-items';
@@ -537,6 +541,8 @@ async function fetchAndRenderTopSellingItems(year, month) {
     }
     const response = await fetch(url);
     const items = await response.json();
+    allTopSellingItems = items;
+    // Render only top 3 in the card
     const tbody = document.getElementById('topSellingItemsTableBody');
     tbody.innerHTML = '';
     let totalRevenue = 0;
@@ -545,7 +551,7 @@ async function fetchAndRenderTopSellingItems(year, month) {
       document.getElementById('topSellingItemsTotalRevenue').textContent = 'shs:';
       return;
     }
-    items.forEach((item, idx) => {
+    items.slice(0, 3).forEach((item, idx) => {
       totalRevenue += item.cost || 0;
       const tr = document.createElement('tr');
       tr.innerHTML = `
@@ -557,12 +563,48 @@ async function fetchAndRenderTopSellingItems(year, month) {
       tbody.appendChild(tr);
     });
     document.getElementById('topSellingItemsTotalRevenue').textContent = `shs:${Number(totalRevenue).toLocaleString()}`;
+    // Reset modal page
+    topSellingItemsModalCurrentPage = 1;
+    renderTopSellingItemsModalTable();
   } catch (error) {
     const tbody = document.getElementById('topSellingItemsTableBody');
     tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading data</td></tr>';
     document.getElementById('topSellingItemsTotalRevenue').textContent = 'shs:';
     console.error('Failed to load top selling items:', error);
   }
+}
+
+function renderTopSellingItemsModalTable() {
+  const tbody = document.getElementById('topSellingItemsModalTableBody');
+  const showingText = document.getElementById('topSellingItemsModalShowingText');
+  const currentPageInfo = document.getElementById('topSellingItemsModalCurrentPageInfo');
+  const pageSize = topSellingItemsModalPageSize;
+  const page = topSellingItemsModalCurrentPage;
+  const total = allTopSellingItems.length;
+  const startIdx = (page - 1) * pageSize;
+  const endIdx = Math.min(startIdx + pageSize, total);
+  tbody.innerHTML = '';
+  if (!total) {
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No data</td></tr>';
+    showingText.textContent = 'Showing 0 to 0 of 0 items';
+    currentPageInfo.textContent = 'Page 1 of 1';
+    return;
+  }
+  allTopSellingItems.slice(startIdx, endIdx).forEach((item, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${startIdx + idx + 1}</td>
+      <td>${item.item_name || ''}</td>
+      <td>${item.quantity || 0}</td>
+      <td class="align-middle text-center text-sm"><span class="text-secondary text-xs font-weight-bold">shs:${Number(item.cost || 0).toLocaleString()}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  showingText.textContent = `Showing ${startIdx + 1} to ${endIdx} of ${total} items`;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  currentPageInfo.textContent = `Page ${page} of ${totalPages}`;
+  document.getElementById('topSellingItemsModalPrevPage').disabled = page === 1;
+  document.getElementById('topSellingItemsModalNextPage').disabled = page === totalPages;
 }
 
 // --- Top Selling Items Month Picker Overlay Logic ---
@@ -926,4 +968,25 @@ document.addEventListener('DOMContentLoaded', function() {
     };
   }
 
+  const viewAllTopSellingItemsBtn = document.getElementById('viewAllTopSellingItemsBtn');
+  if (viewAllTopSellingItemsBtn) {
+    viewAllTopSellingItemsBtn.addEventListener('click', function() {
+      const modal = new bootstrap.Modal(document.getElementById('topSellingItemsModal'));
+      renderTopSellingItemsModalTable();
+      modal.show();
+    });
+  }
+  document.getElementById('topSellingItemsModalPrevPage').addEventListener('click', function() {
+    if (topSellingItemsModalCurrentPage > 1) {
+      topSellingItemsModalCurrentPage--;
+      renderTopSellingItemsModalTable();
+    }
+  });
+  document.getElementById('topSellingItemsModalNextPage').addEventListener('click', function() {
+    const totalPages = Math.max(1, Math.ceil(allTopSellingItems.length / topSellingItemsModalPageSize));
+    if (topSellingItemsModalCurrentPage < totalPages) {
+      topSellingItemsModalCurrentPage++;
+      renderTopSellingItemsModalTable();
+    }
+  });
 });

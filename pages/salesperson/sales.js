@@ -18,12 +18,41 @@ let totalPages = 1;
 
 // Initialize the page
 document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM Content Loaded - Initializing sales page');
   setCurrentDate();
   loadItems();
   loadCustomers();
   loadPaymentMethods();
   loadSalesData();
+  
+  // Initialize any existing item rows
+  setTimeout(() => {
+    const existingRows = document.querySelectorAll('#itemsTableBody tr');
+    existingRows.forEach(row => {
+      const rowId = row.id;
+      if (rowId) {
+        calculateRowTotal(rowId);
+      }
+    });
+  }, 1000); // Wait a bit for items to load
 });
+
+// Test function to verify everything is working
+function testSalesFunctions() {
+  console.log('Testing sales functions...');
+  console.log('Items loaded:', items ? items.length : 'Not loaded');
+  console.log('onQuantityChange function:', typeof onQuantityChange);
+  console.log('calculateRowTotal function:', typeof calculateRowTotal);
+  console.log('addNewItemRow function:', typeof addNewItemRow);
+  
+  // Test adding a new row
+  try {
+    addNewItemRow();
+    console.log('Successfully added new item row');
+  } catch (error) {
+    console.error('Error adding new item row:', error);
+  }
+}
 
 // Set current date
 function setCurrentDate() {
@@ -37,9 +66,11 @@ async function loadItems() {
   try {
     const response = await fetch('http://localhost:5000/api/items');
     items = await response.json();
-    console.log('Items loaded:', items);
+    console.log('Items loaded:', items.length, 'items');
+    return items;
   } catch (error) {
     console.error('Error loading items:', error);
+    return [];
   }
 }
 
@@ -94,6 +125,30 @@ function onCustomerTypeChange() {
 // Add new item row with item selection
 function addNewItemRow() {
   const tableBody = document.getElementById('itemsTableBody');
+  if (!tableBody) {
+    console.error('itemsTableBody not found');
+    return;
+  }
+  
+  if (!items || items.length === 0) {
+    console.warn('Items array is empty or not loaded yet');
+    // Show loading message
+    const loadingRow = document.createElement('tr');
+    loadingRow.innerHTML = '<td colspan="6" class="text-center">Loading items...</td>';
+    tableBody.appendChild(loadingRow);
+    
+    // Try to load items if not available
+    loadItems().then(() => {
+      tableBody.removeChild(loadingRow);
+      addNewItemRow(); // Retry after loading items
+    }).catch(error => {
+      console.error('Failed to load items:', error);
+      tableBody.removeChild(loadingRow);
+      alert('Failed to load items. Please try again.');
+    });
+    return;
+  }
+  
   const row = document.createElement('tr');
   const rowId = 'row_' + Date.now();
   
@@ -105,12 +160,12 @@ function addNewItemRow() {
       </select>
     </td>
     <td>
-      <input type="number" class="form-control form-control-sm item-qty" min="1" value="1" style="width: 80px;" onchange="onQuantityChange(this, '${rowId}')">
+      <input type="number" class="form-control form-control-sm item-qty" min="1" value="1" style="width: 80px;" onchange="onQuantityChange(this, '${rowId}')" onkeyup="onQuantityChange(this, '${rowId}')">
       <span class="text-danger stock-warning" style="display:none;font-size:12px;"></span>
     </td>
     <td><input type="number" class="form-control form-control-sm item-unit-price" min="0" step="0.01" value="0.00" style="width: 100px;" readonly></td>
     <td><input type="text" class="form-control form-control-sm item-total-price" value="0.00" style="width: 100px;" readonly></td>
-    <td><input type="number" class="form-control form-control-sm item-discount" min="0" step="0.01" value="0.00" style="width: 80px;" onchange="calculateRowTotal('${rowId}')"></td>
+    <td><input type="number" class="form-control form-control-sm item-discount" min="0" step="0.01" value="0.00" style="width: 80px;" onchange="calculateRowTotal('${rowId}')" onkeyup="calculateRowTotal('${rowId}')"></td>
     <td><button type="button" class="btn btn-danger btn-sm remove-item-row" onclick="removeItemRow(this)"><i class="fas fa-trash"></i></button></td>
   `;
 
@@ -120,31 +175,67 @@ function addNewItemRow() {
 
 // Handle item selection
 function onItemSelect(selectElement, rowId) {
-  const selectedItemId = selectElement.value;
-  const selectedItem = items.find(item => item._id === selectedItemId);
-  
-  if (selectedItem) {
-    const row = document.getElementById(rowId);
-    const unitPriceInput = row.querySelector('.item-unit-price');
-    unitPriceInput.value = selectedItem.selling_price_per_unit.toFixed(2);
-    calculateRowTotal(rowId);
+  try {
+    const selectedItemId = selectElement.value;
+    const selectedItem = items.find(item => item._id === selectedItemId);
+    
+    if (selectedItem) {
+      const row = document.getElementById(rowId);
+      if (row) {
+        const unitPriceInput = row.querySelector('.item-unit-price');
+        if (unitPriceInput) {
+          unitPriceInput.value = selectedItem.selling_price_per_unit.toFixed(2);
+          calculateRowTotal(rowId);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error in onItemSelect:', error);
   }
 }
 
 // Calculate row total
 function calculateRowTotal(rowId) {
+  console.log('calculateRowTotal called with rowId:', rowId);
   const row = document.getElementById(rowId);
+  if (!row) {
+    console.error('Row not found for rowId:', rowId);
+    return;
+  }
+  
   const qtyInput = row.querySelector('.item-qty');
   const unitPriceInput = row.querySelector('.item-unit-price');
   const discountInput = row.querySelector('.item-discount');
   const totalPriceInput = row.querySelector('.item-total-price');
 
+  console.log('Found inputs:', {
+    qtyInput: !!qtyInput,
+    unitPriceInput: !!unitPriceInput,
+    discountInput: !!discountInput,
+    totalPriceInput: !!totalPriceInput
+  });
+
+  if (!qtyInput || !unitPriceInput || !discountInput || !totalPriceInput) {
+    console.error('Required input elements not found in row:', rowId);
+    console.error('Missing elements:', {
+      qtyInput: !qtyInput,
+      unitPriceInput: !unitPriceInput,
+      discountInput: !discountInput,
+      totalPriceInput: !totalPriceInput
+    });
+    return;
+  }
+
   const qty = parseFloat(qtyInput.value) || 0;
   const price = parseFloat(unitPriceInput.value) || 0;
   const discount = parseFloat(discountInput.value) || 0;
   
+  console.log('Calculating total:', { qty, price, discount });
+  
   let total = qty * price - discount;
   if (total < 0) total = 0;
+  
+  console.log('Total calculated:', total);
   
   totalPriceInput.value = total.toFixed(2);
   calculateGrandTotal();
@@ -276,7 +367,7 @@ function getSaleItems() {
     const totalPriceInput = row.querySelector('.item-total-price');
     const discountInput = row.querySelector('.item-discount');
 
-    if (itemSelect.value) {
+    if (itemSelect && itemSelect.value) {
       items.push({
         item_id: itemSelect.value,
         quantity: parseFloat(qtyInput.value) || 0,
@@ -988,20 +1079,63 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Add the onQuantityChange function
 function onQuantityChange(input, rowId) {
-  const row = document.getElementById(rowId);
-  const qty = parseFloat(input.value) || 0;
-  const itemSelect = row.querySelector('.item-select');
-  const selectedItemId = itemSelect.value;
-  const selectedItem = items.find(item => item._id === selectedItemId);
-  const warningSpan = row.querySelector('.stock-warning');
-  if (selectedItem && qty > selectedItem.total_quantity) {
-    warningSpan.textContent = `Only ${selectedItem.total_quantity} in stock!`;
-    warningSpan.style.display = 'block';
-  } else {
-    warningSpan.textContent = '';
-    warningSpan.style.display = 'none';
+  console.log('onQuantityChange called with rowId:', rowId, 'input value:', input.value);
+  
+  // Validate input parameters
+  if (!input || !rowId) {
+    console.error('Invalid parameters passed to onQuantityChange:', { input, rowId });
+    return;
   }
-  calculateRowTotal(rowId);
+  
+  try {
+    const row = document.getElementById(rowId);
+    if (!row) {
+      console.error('Row not found for rowId:', rowId);
+      return;
+    }
+    
+    const qty = parseFloat(input.value) || 0;
+    const itemSelect = row.querySelector('.item-select');
+    
+    console.log('Found itemSelect:', itemSelect);
+    console.log('itemSelect value:', itemSelect ? itemSelect.value : 'null');
+    
+    // Check if item is selected
+    if (!itemSelect || !itemSelect.value) {
+      console.log('No item selected, calculating total without stock validation');
+      // No item selected yet, just calculate the total without stock validation
+      calculateRowTotal(rowId);
+      return;
+    }
+    
+    const selectedItemId = itemSelect.value;
+    console.log('Selected item ID:', selectedItemId);
+    console.log('Available items:', items);
+    
+    const selectedItem = items.find(item => item._id === selectedItemId);
+    console.log('Selected item:', selectedItem);
+    
+    const warningSpan = row.querySelector('.stock-warning');
+    
+    if (selectedItem && qty > selectedItem.total_quantity) {
+      warningSpan.textContent = `Only ${selectedItem.total_quantity} in stock!`;
+      warningSpan.style.display = 'block';
+    } else {
+      warningSpan.textContent = '';
+      warningSpan.style.display = 'none';
+    }
+    
+    calculateRowTotal(rowId);
+  } catch (error) {
+    console.error('Error in onQuantityChange:', error);
+    console.error('Error stack:', error.stack);
+    // Still try to calculate the total even if there's an error
+    try {
+      calculateRowTotal(rowId);
+    } catch (calcError) {
+      console.error('Error calculating row total:', calcError);
+    }
+  }
 }
 
 // Store original values for increment logic

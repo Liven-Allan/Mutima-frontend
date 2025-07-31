@@ -185,6 +185,25 @@ window.addEventListener('DOMContentLoaded', async () => {
     inventoryCostMonthNext.addEventListener('click', () => changeInventoryCostMonth(1));
   }
 
+  // Add event listeners for Inventory Cost Details pagination
+  if (inventoryCostPrevPage) {
+    inventoryCostPrevPage.addEventListener('click', function () {
+      if (inventoryCostCurrentPage > 1) {
+        inventoryCostCurrentPage--;
+        renderInventoryCostTablePage();
+      }
+    });
+  }
+  if (inventoryCostNextPage) {
+    inventoryCostNextPage.addEventListener('click', function () {
+      const totalPages = Math.ceil(inventoryCostDetailsData.length / inventoryCostPageSize) || 1;
+      if (inventoryCostCurrentPage < totalPages) {
+        inventoryCostCurrentPage++;
+        renderInventoryCostTablePage();
+      }
+    });
+  }
+
   // Sales over last 7 days bar graph
   const salesChartElem = document.getElementById('sales-chart');
   if (salesChartElem) {
