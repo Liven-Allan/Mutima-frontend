@@ -372,6 +372,10 @@
           alert('Credit sale saved, but failed to create credit transaction: ' + (error.details || error.error || 'Unknown error'));
           return;
         }
+        
+        const creditResult = await creditRes.json();
+        console.log('Credit transaction created successfully:', creditResult);
+        
         // Success!
         alert('Credit sale and credit transaction created successfully! Invoice: ' + (sale?.invoice_number || 'N/A'));
         // Close modal
@@ -380,6 +384,7 @@
         // Reset form
         resetCreditSaleForm();
         // Reload the Customer Credit Accounts table so the new record appears immediately
+        console.log('Calling refreshCreditAccounts to update the table...');
         refreshCreditAccounts();
         return; // Prevent further execution and double popup
       } catch (error) {
@@ -766,7 +771,6 @@
           resetRecordPaymentModal();
           document.getElementById('paymentDate').value = new Date().toISOString().slice(0,10);
           loadPaymentMethods(); // Load payment methods when modal opens
-          loadPaymentCustomers(); // <-- Add this line
         });
       }
     });
@@ -777,57 +781,9 @@
     //   <option value="">Select customer...</option>
     // </select>
 
-    // 2. Add the JS function to load and populate the select:
-    async function loadPaymentCustomers() {
-      const select = document.getElementById('creditCustomerTypePayment');
-      // Remove all except the first option
-      while (select.options.length > 1) select.remove(1);
-      try {
-        const res = await fetch('http://localhost:5000/api/customers-with-credit');
-        const customers = await res.json();
-        console.log('Populating payment customers:', customers);
-        if (customers.length === 0) {
-          const opt = document.createElement('option');
-          opt.value = '';
-          opt.textContent = 'No customers with credit';
-          select.appendChild(opt);
-        } else {
-          customers.forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c._id;
-            opt.textContent = c.name || c.phone || c.email || 'Unnamed';
-            opt.dataset.customer = JSON.stringify(c);
-            select.appendChild(opt);
-          });
-        }
-      } catch (e) {
-        const opt = document.createElement('option');
-        opt.value = '';
-        opt.textContent = 'Error loading customers';
-        select.appendChild(opt);
-      }
-    }
 
-    // 3. On customer selection, fetch and display their credit details
-    async function onPaymentCustomerChange() {
-      const select = document.getElementById('creditCustomerTypePayment');
-      const selectedId = select.value;
-      if (!selectedId) {
-        resetPaymentCustomerSelection();
-        return;
-      }
-      // Find the selected customer object
-      const selectedOption = select.options[select.selectedIndex];
-      let customer;
-      try {
-        customer = JSON.parse(selectedOption.dataset.customer);
-      } catch {
-        customer = null;
-      }
-      if (customer) {
-        await selectPaymentCustomer(customer);
-      }
-    }
+
+
 
     // 4. Call loadPaymentCustomers() when the modal opens
     // In the DOMContentLoaded event for the Record Payment modal, add:
@@ -1025,16 +981,8 @@
     async function loadCreditAccounts() {
       try {
         console.log('Fetching credit accounts...');
-        
-        // First test if the server is working
-        const testResponse = await fetch('http://localhost:5000/api/test');
-        const testData = await testResponse.text();
-        console.log('Test response:', testData);
-        
         const response = await fetch('http://localhost:5000/api/customer-credit-accounts');
         console.log('Response status:', response.status);
-        console.log('Response headers:', response.headers);
-        
         const responseText = await response.text();
         console.log('Response text:', responseText);
         
@@ -1044,6 +992,20 @@
         
         creditAccounts = JSON.parse(responseText);
         console.log('Parsed credit accounts:', creditAccounts);
+        console.log('Number of credit accounts found:', creditAccounts.length);
+        
+        // Log each account for debugging
+        creditAccounts.forEach((account, index) => {
+          console.log(`Account ${index + 1}:`, {
+            customer_name: account.customer_name,
+            customer_id: account.customer_id,
+            total_credit: account.total_credit,
+            amount_paid: account.amount_paid,
+            balance: account.balance,
+            status: account.status,
+            transaction_count: account.transaction_count
+          });
+        });
         
         displayCreditAccounts();
       } catch (error) {
@@ -1179,6 +1141,44 @@
       loadCreditAccounts();
     }
 
+    // Debug function to check all credit transactions
+    async function debugCreditTransactions() {
+      try {
+        console.log('Calling debug endpoint...');
+        const response = await fetch('http://localhost:5000/api/debug/credit-transactions');
+        const data = await response.json();
+        
+        console.log('Debug endpoint response:', data);
+        console.log('Total transactions found:', data.total_count);
+        
+        if (data.transactions && data.transactions.length > 0) {
+          console.log('All credit transactions:');
+          data.transactions.forEach((tx, index) => {
+            console.log(`Transaction ${index + 1}:`, {
+              id: tx.id,
+              customer: tx.customer_name,
+              phone: tx.customer_phone,
+              sale_invoice: tx.sale_invoice,
+              total_amount: tx.total_amount,
+              amount_paid: tx.amount_paid,
+              payment_status: tx.payment_status,
+              transaction_date: tx.transaction_date
+            });
+          });
+        } else {
+          console.log('No credit transactions found');
+        }
+        
+        alert(`Debug complete! Found ${data.total_count} credit transactions. Check console for details.`);
+      } catch (error) {
+        console.error('Error calling debug endpoint:', error);
+        alert('Error calling debug endpoint: ' + error.message);
+      }
+    }
+
+    // Make debug function globally accessible
+    window.debugCreditTransactions = debugCreditTransactions;
+
     // Function to view customer account details (placeholder)
     function viewCustomerAccount(customerId) {
       // This could open a modal with detailed account information
@@ -1195,18 +1195,52 @@
 // Add JS for loading customers and handling select for Record Payment modal
 async function loadCreditCustomersPayment() {
       const select = document.getElementById('creditCustomerTypePayment');
-      // Remove all except the first option
-      while (select.options.length > 1) select.remove(1);
+      if (!select) {
+        console.error('Credit customer select element not found');
+        return;
+      }
+      
+      // Clear all options except the first one (placeholder)
+      while (select.options.length > 1) {
+        select.remove(1);
+      }
+      
       try {
         const res = await fetch('http://localhost:5000/api/customers-with-credit');
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        
         const customers = await res.json();
+        console.log('Loaded customers for payment modal:', customers.length);
+        
+        // Use a Set to track added customer IDs to prevent duplicates
+        const addedCustomerIds = new Set();
+        
         customers.forEach(c => {
+          // Skip if customer ID already added (prevent duplicates)
+          if (addedCustomerIds.has(c._id)) {
+            console.warn('Duplicate customer found:', c._id, c.name);
+            return;
+          }
+          
           const opt = document.createElement('option');
           opt.value = c._id;
           opt.textContent = c.name || c.phone || c.email || 'Unnamed';
           select.appendChild(opt);
+          addedCustomerIds.add(c._id);
         });
-      } catch (e) { /* handle error */ }
+        
+        console.log('Added customers to payment dropdown:', addedCustomerIds.size);
+      } catch (e) {
+        console.error('Error loading customers for payment modal:', e);
+        // Add error option to dropdown
+        const errorOpt = document.createElement('option');
+        errorOpt.value = '';
+        errorOpt.textContent = 'Error loading customers';
+        errorOpt.disabled = true;
+        select.appendChild(errorOpt);
+      }
     }
     document.getElementById('recordPaymentModal').addEventListener('show.bs.modal', loadCreditCustomersPayment);
 
@@ -1526,7 +1560,7 @@ let filteredCreditAccounts = null;
                 <span class="text-secondary text-xs font-weight-bold">shs:${account.amount_paid.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
               </td>
               <td class="align-middle text-center">
-                <span class="text-secondary text-xs font-weight-bold">she:${account.balance.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                <span class="text-secondary text-xs font-weight-bold">shs:${account.balance.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
               </td>
               <td class="align-middle text-center">
                 <span class="text-secondary text-xs font-weight-bold">${lastPaymentDate}</span>
@@ -1541,3 +1575,36 @@ let filteredCreditAccounts = null;
         updateCreditPaginationControls();
       }
     });
+
+// Function to recalculate customer credit balances
+async function recalculateCustomerBalances() {
+  try {
+    console.log('Starting customer balance recalculation...');
+    
+    const response = await fetch('http://localhost:5000/api/recalculate-customer-balances', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    console.log('Recalculation result:', result);
+    
+    alert(`Successfully recalculated balances for ${result.customers_updated} customers.`);
+    
+    // Refresh the credit accounts table to show updated balances
+    await loadCreditAccounts();
+    
+  } catch (error) {
+    console.error('Error recalculating customer balances:', error);
+    alert('Error recalculating customer balances: ' + error.message);
+  }
+}
+
+// Make the function globally accessible
+window.recalculateCustomerBalances = recalculateCustomerBalances;

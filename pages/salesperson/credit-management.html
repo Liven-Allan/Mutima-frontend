@@ -75,6 +75,14 @@
             <span class="nav-link-text ms-1">Credit Management</span>
           </a>
         </li>
+         <li class="nav-item">
+          <a class="nav-link" href="../salesperson/credit-customers.html">
+            <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="fas fa-users text-dark"></i>
+            </div>
+            <span class="nav-link-text ms-1">Credit Customers</span>
+          </a>
+        </li>
         <li class="nav-item">
           <a class="nav-link" href="../salesperson/customer-requests.html">
             <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
@@ -216,8 +224,13 @@
                 </div>
               </div>
               <div class="row mt-4">
-                <div class="col-12 d-flex justify-content-end">
-                  <div class="input-group input-group-outline me-3" style="width: 250px; height: 45px;">
+                <div class="col-12 d-flex justify-content-between align-items-center">
+                  <div>
+                    <button class="btn bg-gradient-warning btn-sm" onclick="recalculateCustomerBalances()">
+                      <i class="fas fa-calculator me-2"></i>Recalculate Balances
+                    </button>
+                  </div>
+                  <div class="input-group input-group-outline" style="width: 250px; height: 45px;">
                     <span class="input-group-text"><i class="fas fa-search"></i></span>
                     <input type="text" class="form-control" placeholder="Search Customer" id="searchCustomerInput">
                   </div>
