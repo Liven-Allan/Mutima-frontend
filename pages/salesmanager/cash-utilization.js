@@ -1,6 +1,8 @@
 // Fetch and update Stock Inventory Value
 let latestStockInventoryDate = null;
 
+console.log('Cash utilization JavaScript loaded');
+
 async function updateStockInventoryValue() {
   const valueElem = document.getElementById('stock-inventory-value');
   if (!valueElem) return;
@@ -1027,7 +1029,7 @@ async function fetchAndRenderStockAnalysisTable() {
 
 // --- Stock Analysis Table Pagination Logic ---
 const stockAnalysisPageSize = 4;
-let stockAnalysisCache = [];
+window.stockAnalysisCache = [];
 let stockAnalysisCurrentPage = 1;
 let stockAnalysisTotalPages = 1;
 
@@ -1485,3 +1487,49 @@ async function renderTopROIChart() {
 }
 // Render chart when modal is shown
 window.addEventListener('DOMContentLoaded', renderTopROIChart);
+
+// --- PDF Export Functionality for Stock Analysis ---
+
+// Event listener for Export PDF button - using event delegation for dynamic content
+document.addEventListener('click', function(event) {
+  if (event.target && event.target.id === 'exportStockAnalysisPDF') {
+    console.log('Export PDF button clicked');
+    exportStockAnalysisToPDF();
+  }
+});
+
+// Alternative approach: attach event listener when modal is shown
+document.addEventListener('DOMContentLoaded', function() {
+  const stockAnalysisModal = document.getElementById('stockAnalysisModal');
+  if (stockAnalysisModal) {
+    stockAnalysisModal.addEventListener('shown.bs.modal', function() {
+      const exportPDFBtn = document.getElementById('exportStockAnalysisPDF');
+      if (exportPDFBtn && !exportPDFBtn.hasAttribute('data-pdf-listener-attached')) {
+        exportPDFBtn.addEventListener('click', exportStockAnalysisToPDF);
+        exportPDFBtn.setAttribute('data-pdf-listener-attached', 'true');
+      }
+    });
+  }
+});
+
+// Helper function to show notifications
+window.showNotification = function(message, type = 'info') {
+  // Create notification element
+  const notification = document.createElement('div');
+  notification.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} alert-dismissible fade show position-fixed`;
+  notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+  notification.innerHTML = `
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  `;
+  
+  // Add to body
+  document.body.appendChild(notification);
+  
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.remove();
+    }
+  }, 5000);
+}

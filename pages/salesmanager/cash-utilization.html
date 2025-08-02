@@ -34,6 +34,9 @@
   <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
   <!-- CSS Files -->
   <link id="pagestyle" href="../../assets/css/soft-ui-dashboard.css?v=1.1.0" rel="stylesheet" />
+  <!-- jsPDF for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
   <style>
     /* Ensure sidebar navigation is scrollable */
     #sidenav-main .navbar-nav {
@@ -622,7 +625,7 @@
               </div>
             </div>
             <div class="col-md-4 d-flex justify-content-end gap-2">
-              <button class="btn btn-outline-secondary btn-sm"><i class="fas fa-file-pdf me-1"></i> Export PDF</button>
+              <button class="btn btn-outline-secondary btn-sm" id="exportStockAnalysisPDF" onclick="exportStockAnalysisToPDF()"><i class="fas fa-file-pdf me-1"></i> Export PDF</button>
               <button class="btn btn-outline-secondary btn-sm"><i class="fas fa-file-csv me-1"></i> Export CSV</button>
             </div>
           </div>
@@ -853,9 +856,200 @@
       </div>
     </div>
   </div>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="cash-utilization.js"></script>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+     <script src="cash-utilization.js"></script>
+   <script>
+   // Ensure PDF export function is available globally
+       window.exportStockAnalysisToPDF = async function() {
+      console.log('PDF export function called from HTML script');
+     try {
+       // Show loading state
+       const exportBtn = document.getElementById('exportStockAnalysisPDF');
+       if (!exportBtn) {
+         console.error('Export button not found');
+         return;
+       }
+       const originalText = exportBtn.innerHTML;
+       exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Generating PDF...';
+       exportBtn.disabled = true;
+
+       // Get current date and time for filename
+       const now = new Date();
+       const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '-');
+       const timeStr = now.toLocaleTimeString('en-GB').replace(/:/g, '-');
+       const filename = `Stock_Analysis_Report_${dateStr}_${timeStr}.pdf`;
+
+       // Create new jsPDF instance
+       if (!window.jspdf) {
+         console.error('jsPDF library not loaded');
+         throw new Error('jsPDF library not available');
+       }
+       const { jsPDF } = window.jspdf;
+       const doc = new jsPDF();
+
+       // Add title
+       doc.setFontSize(20);
+       doc.setFont('helvetica', 'bold');
+       doc.text('Stock Analysis Report', 105, 20, { align: 'center' });
+
+       // Add date and time
+       doc.setFontSize(12);
+       doc.setFont('helvetica', 'normal');
+       doc.text(`Generated on: ${now.toLocaleDateString()} at ${now.toLocaleTimeString()}`, 105, 30, { align: 'center' });
+
+       // Add summary information
+       doc.setFontSize(14);
+       doc.setFont('helvetica', 'bold');
+       doc.text('Summary', 20, 45);
+
+       // Get summary data from the modal
+       const totalSKUs = document.getElementById('stock-analysis-total-skus')?.textContent || 'N/A';
+       const lowStockItems = document.getElementById('stock-analysis-low-stock')?.textContent || 'N/A';
+       const recentlyReceived = document.getElementById('stock-analysis-recently-received')?.textContent || 'N/A';
+
+       doc.setFontSize(10);
+       doc.setFont('helvetica', 'normal');
+       doc.text(`Total SKUs: ${totalSKUs}`, 20, 55);
+       doc.text(`Low Stock Items: ${lowStockItems}`, 20, 62);
+       doc.text(`Recently Received: ${recentlyReceived}`, 20, 69);
+
+       // Get all stock analysis data (not just current page)
+       let allStockData = [];
+       
+       // If we have cached data, use it
+       if (window.stockAnalysisCache && window.stockAnalysisCache.length > 0) {
+         allStockData = window.stockAnalysisCache;
+       } else {
+         // Fetch fresh data if cache is empty
+         try {
+           const response = await fetch('http://localhost:5000/api/items/stock-table');
+           const data = await response.json();
+           allStockData = data.items || [];
+         } catch (error) {
+           console.error('Error fetching stock data for PDF:', error);
+           allStockData = [];
+         }
+       }
+
+       // Prepare table data
+       const tableData = allStockData.map(item => [
+         item.name || 'N/A',
+         item.currentStock ? item.currentStock.toString() : 'N/A',
+         item.unitPrice ? `shs:${Number(item.unitPrice).toLocaleString()}` : 'N/A',
+         item.totalCost ? `shs:${Number(item.totalCost).toLocaleString()}` : 'N/A',
+         item.lastReceived || 'N/A'
+       ]);
+
+       // Add table title
+       doc.setFontSize(14);
+       doc.setFont('helvetica', 'bold');
+       doc.text('Stock Inventory Details', 20, 85);
+
+       // Create table
+       doc.autoTable({
+         startY: 90,
+         head: [['Item Name', 'Current Stock', 'Unit Price', 'Total Cost', 'Last Received']],
+         body: tableData,
+         theme: 'grid',
+         headStyles: {
+           fillColor: [41, 128, 185],
+           textColor: 255,
+           fontStyle: 'bold'
+         },
+         styles: {
+           fontSize: 8,
+           cellPadding: 3
+         },
+         columnStyles: {
+           0: { cellWidth: 50 }, // Item Name
+           1: { cellWidth: 25 }, // Current Stock
+           2: { cellWidth: 30 }, // Unit Price
+           3: { cellWidth: 30 }, // Total Cost
+           4: { cellWidth: 35 }  // Last Received
+         },
+         margin: { top: 90, left: 20, right: 20 }
+       });
+
+       // Convert charts to images and add to PDF
+       try {
+         // Get chart canvases
+         const topStockChart = document.getElementById('topStockValueBarChart');
+         const stockMovementChart = document.getElementById('stockMovementLineChart');
+         
+         if (topStockChart && stockMovementChart) {
+           // Get the final Y position after the table
+           const tableEndY = doc.lastAutoTable.finalY || 120;
+           
+           // Check if we need a new page for charts
+           const chartsStartY = tableEndY + 20;
+           if (chartsStartY > doc.internal.pageSize.height - 60) {
+             doc.addPage();
+           }
+           
+           // Add charts section title
+           doc.setFontSize(14);
+           doc.setFont('helvetica', 'bold');
+           doc.text('Stock Analysis Charts', 20, chartsStartY);
+           
+           // Convert first chart to image
+           const topStockImage = topStockChart.toDataURL('image/png');
+           doc.addImage(topStockImage, 'PNG', 20, chartsStartY + 10, 80, 40);
+           doc.setFontSize(10);
+           doc.setFont('helvetica', 'normal');
+           doc.text('All Items by Stock Value', 20, chartsStartY + 55);
+           
+           // Convert second chart to image
+           const stockMovementImage = stockMovementChart.toDataURL('image/png');
+           doc.addImage(stockMovementImage, 'PNG', 110, chartsStartY + 10, 80, 40);
+           doc.setFontSize(10);
+           doc.setFont('helvetica', 'normal');
+           doc.text('Stock Movement Trend', 110, chartsStartY + 55);
+         }
+       } catch (chartError) {
+         console.warn('Could not include charts in PDF:', chartError);
+         // Continue without charts if there's an error
+       }
+
+       // Add footer
+       const pageCount = doc.internal.getNumberOfPages();
+       for (let i = 1; i <= pageCount; i++) {
+         doc.setPage(i);
+         doc.setFontSize(8);
+         doc.setFont('helvetica', 'italic');
+         doc.text(`Page ${i} of ${pageCount}`, 105, doc.internal.pageSize.height - 10, { align: 'center' });
+       }
+
+       // Save the PDF
+       doc.save(filename);
+
+       // Reset button state
+       exportBtn.innerHTML = originalText;
+       exportBtn.disabled = false;
+
+       // Show success message
+       if (window.showNotification) {
+         window.showNotification('PDF exported successfully!', 'success');
+       }
+
+     } catch (error) {
+       console.error('Error generating PDF:', error);
+       
+       // Reset button state
+       const exportBtn = document.getElementById('exportStockAnalysisPDF');
+       if (exportBtn) {
+         exportBtn.innerHTML = '<i class="fas fa-file-pdf me-1"></i> Export PDF';
+         exportBtn.disabled = false;
+       }
+       
+       // Show error message
+       if (window.showNotification) {
+         window.showNotification('Error generating PDF. Please try again.', 'error');
+       }
+     }
+   };
+   
+   console.log('PDF export function defined in HTML script');
+   </script>
   <script>
 document.getElementById('signOutLink').addEventListener('click', function(e) {
   e.preventDefault();
