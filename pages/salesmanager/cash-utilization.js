@@ -761,60 +761,187 @@ if (financialReportModal) {
 const exportPDFBtn = document.getElementById('financialReportExportPDF');
 if (exportPDFBtn) {
   exportPDFBtn.addEventListener('click', async function () {
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF('p', 'pt', 'a4');
-    let y = 40;
+    try {
+      // Show loading state
+      const originalText = exportPDFBtn.innerHTML;
+      exportPDFBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Generating PDF...';
+      exportPDFBtn.disabled = true;
 
-    // Title
-    pdf.setFontSize(18);
-    pdf.text('Financial Report', 40, y);
-    y += 30;
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'pt', 'a4');
+      const pageWidth = pdf.internal.pageSize.width;
+      const pageHeight = pdf.internal.pageSize.height;
+      let y = 40;
 
-    // Month label
-    const monthLabel = document.getElementById('financialReportMonthLabel').textContent;
-    pdf.setFontSize(12);
-    pdf.text(`Month: ${monthLabel}`, 40, y);
-    y += 20;
+      // Add company header
+      pdf.setFillColor(41, 128, 185);
+      pdf.rect(0, 0, pageWidth, 30, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Financial Report', pageWidth / 2, 20, { align: 'center' });
+      pdf.setTextColor(0, 0, 0);
 
-    // Summary Cards
-    const revenue = document.getElementById('financial-report-total-revenue').textContent;
-    const expenses = document.getElementById('financial-report-total-expenses').textContent;
-    const profit = document.getElementById('financial-report-net-profit').textContent;
-    pdf.setFontSize(14);
-    pdf.text('Summary:', 40, y);
-    y += 20;
-    pdf.setFontSize(12);
-    pdf.text(`Total Revenue: ${revenue}`, 60, y);
-    y += 16;
-    pdf.text(`Total Expenses: ${expenses}`, 60, y);
-    y += 16;
-    pdf.text(`Net Profit: ${profit}`, 60, y);
-    y += 30;
+      // Add generation date and time
+      const now = new Date();
+      const dateStr = now.toLocaleDateString();
+      const timeStr = now.toLocaleTimeString();
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`Generated on: ${dateStr} at ${timeStr}`, pageWidth - 40, 50, { align: 'right' });
 
-    // Export Pie Chart as image
-    const pieCanvas = document.getElementById('expenseRevenuePieChart');
-    if (pieCanvas) {
-      const pieImg = pieCanvas.toDataURL('image/png', 1.0);
-      pdf.setFontSize(12);
-      pdf.text('Expense vs Revenue vs Profit', 40, y);
-      y += 10;
-      pdf.addImage(pieImg, 'PNG', 40, y, 200, 120);
-      y += 130;
+      // Month label with better styling
+      const monthLabel = document.getElementById('financialReportMonthLabel').textContent;
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`Period: ${monthLabel}`, 40, 70);
+      y = 90;
+
+      // Summary section with better formatting
+      pdf.setFillColor(248, 249, 250);
+      pdf.rect(30, y - 10, pageWidth - 60, 80, 'F');
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(41, 128, 185);
+      pdf.text('Financial Summary', 40, y);
+      y += 25;
+
+      // Get summary data
+      const revenue = document.getElementById('financial-report-total-revenue').textContent;
+      const expenses = document.getElementById('financial-report-total-expenses').textContent;
+      const profit = document.getElementById('financial-report-net-profit').textContent;
+
+      // Create summary table
+      const summaryData = [
+        ['Metric', 'Amount'],
+        ['Total Revenue', revenue],
+        ['Total Expenses', expenses],
+        ['Net Profit', profit]
+      ];
+
+      pdf.autoTable({
+        startY: y,
+        head: [['Metric', 'Amount']],
+        body: summaryData.slice(1), // Skip header row since we're using head
+        theme: 'grid',
+        headStyles: {
+          fillColor: [41, 128, 185],
+          textColor: 255,
+          fontStyle: 'bold'
+        },
+        styles: {
+          fontSize: 12,
+          cellPadding: 8
+        },
+        columnStyles: {
+          0: { cellWidth: 120, fontStyle: 'bold' },
+          1: { cellWidth: 120, halign: 'right' }
+        },
+        margin: { left: 40, right: 40 }
+      });
+
+      y = pdf.lastAutoTable.finalY + 30;
+
+      // Charts section
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(41, 128, 185);
+      pdf.text('Financial Analysis Charts', 40, y);
+      y += 25;
+
+      // Export Pie Chart as image
+      const pieCanvas = document.getElementById('expenseRevenuePieChart');
+      if (pieCanvas) {
+        try {
+          const pieImg = pieCanvas.toDataURL('image/png', 1.0);
+          
+          // Check if we need a new page
+          if (y > pageHeight - 200) {
+            pdf.addPage();
+            y = 40;
+          }
+          
+          pdf.setFontSize(12);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setTextColor(0, 0, 0);
+          pdf.text('Expense vs Revenue vs Profit Analysis', 40, y);
+          y += 15;
+          
+          // Add chart with better positioning
+          const chartWidth = 200;
+          const chartHeight = 120;
+          const chartX = 40;
+          pdf.addImage(pieImg, 'PNG', chartX, y, chartWidth, chartHeight);
+          y += chartHeight + 20;
+        } catch (error) {
+          console.warn('Could not export pie chart:', error);
+        }
+      }
+
+      // Export Line Chart as image
+      const lineCanvas = document.getElementById('profitTrendLineChart');
+      if (lineCanvas) {
+        try {
+          const lineImg = lineCanvas.toDataURL('image/png', 1.0);
+          
+          // Check if we need a new page
+          if (y > pageHeight - 200) {
+            pdf.addPage();
+            y = 40;
+          }
+          
+          pdf.setFontSize(12);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setTextColor(0, 0, 0);
+          pdf.text('Monthly Profit Trend Analysis', 40, y);
+          y += 15;
+          
+          // Add chart with better positioning
+          const chartWidth = 400;
+          const chartHeight = 120;
+          const chartX = 40;
+          pdf.addImage(lineImg, 'PNG', chartX, y, chartWidth, chartHeight);
+          y += chartHeight + 20;
+        } catch (error) {
+          console.warn('Could not export line chart:', error);
+        }
+      }
+
+      // Add footer with page numbers
+      const pageCount = pdf.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(8);
+        pdf.setFont('helvetica', 'italic');
+        pdf.setTextColor(128, 128, 128);
+        pdf.text(`Page ${i} of ${pageCount}`, pageWidth / 2, pageHeight - 20, { align: 'center' });
+      }
+
+      // Save the PDF with better filename
+      const filename = `Financial_Report_${monthLabel.replace(/[^a-zA-Z0-9]/g, '_')}_${dateStr.replace(/\//g, '-')}.pdf`;
+      pdf.save(filename);
+
+      // Reset button
+      exportPDFBtn.innerHTML = originalText;
+      exportPDFBtn.disabled = false;
+
+      // Show success message
+      if (window.showNotification) {
+        window.showNotification('Financial Report PDF exported successfully!', 'success');
+      }
+
+    } catch (error) {
+      console.error('Error generating Financial Report PDF:', error);
+      
+      // Reset button
+      exportPDFBtn.innerHTML = '<i class="fas fa-file-pdf me-1"></i> Export PDF';
+      exportPDFBtn.disabled = false;
+
+      // Show error message
+      if (window.showNotification) {
+        window.showNotification('Error generating PDF. Please try again.', 'error');
+      }
     }
-
-    // Export Line Chart as image
-    const lineCanvas = document.getElementById('profitTrendLineChart');
-    if (lineCanvas) {
-      const lineImg = lineCanvas.toDataURL('image/png', 1.0);
-      pdf.setFontSize(12);
-      pdf.text('Monthly Profit Trend', 40, y);
-      y += 10;
-      pdf.addImage(lineImg, 'PNG', 40, y, 400, 120);
-      y += 130;
-    }
-
-    // Save the PDF
-    pdf.save(`Financial_Report_${monthLabel.replace(' ', '_')}.pdf`);
   });
 }
 
