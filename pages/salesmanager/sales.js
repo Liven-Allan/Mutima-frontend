@@ -741,6 +741,232 @@ async function exportRecentSalesToPDF() {
 // Make export function globally available
 window.exportRecentSalesToPDF = exportRecentSalesToPDF;
 
+// --- Sales Trend Period Selection Functions ---
+function populateSalesTrendYearSelect() {
+  const yearSelect = document.getElementById('salesTrendYearSelect');
+  if (!yearSelect) return;
+  
+  // Clear existing options except the first one
+  yearSelect.innerHTML = '<option value="">All Years</option>';
+  
+  // Get current year and add last 5 years
+  const currentYear = new Date().getFullYear();
+  for (let year = currentYear; year >= currentYear - 5; year--) {
+    const option = document.createElement('option');
+    option.value = year;
+    option.textContent = year;
+    yearSelect.appendChild(option);
+  }
+}
+
+function openSalesTrendPeriodModal() {
+  populateSalesTrendYearSelect();
+  const modal = new bootstrap.Modal(document.getElementById('salesTrendPeriodModal'));
+  modal.show();
+}
+
+function updateSalesTrendFilterStatus(year, month) {
+  const label = document.getElementById('salesTrendSelectedMonthLabel');
+  if (!label) return;
+  
+  if (year && month) {
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    const monthName = monthNames[parseInt(month) - 1];
+    label.textContent = `${monthName} ${year}`;
+  } else if (year) {
+    label.textContent = `Year ${year}`;
+  } else if (month) {
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    const monthName = monthNames[parseInt(month) - 1];
+    label.textContent = monthName;
+  } else {
+    label.textContent = 'All Time';
+  }
+}
+
+function applySalesTrendPeriodFilter() {
+  const yearSelect = document.getElementById('salesTrendYearSelect');
+  const monthSelect = document.getElementById('salesTrendMonthSelect');
+  
+  if (!yearSelect || !monthSelect) return;
+  
+  const year = yearSelect.value;
+  const month = monthSelect.value;
+  
+  // Update the filter status
+  updateSalesTrendFilterStatus(year, month);
+  
+  // Fetch and render sales trend with filter
+  fetchAndRenderSalesTrendWithFilter(year, month);
+  
+  // Close the modal properly with timeout to ensure it closes
+  setTimeout(() => {
+    const modalElement = document.getElementById('salesTrendPeriodModal');
+    if (modalElement) {
+      const modal = bootstrap.Modal.getInstance(modalElement);
+      if (modal) {
+        modal.hide();
+      } else {
+        // Fallback: manually remove modal classes and backdrop
+        modalElement.classList.remove('show');
+        modalElement.style.display = 'none';
+        modalElement.setAttribute('aria-hidden', 'true');
+        modalElement.removeAttribute('aria-modal');
+        modalElement.removeAttribute('role');
+        
+        // Remove backdrop
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) {
+          backdrop.remove();
+        }
+        
+        // Re-enable body scrolling
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+      }
+    }
+  }, 100); // Small delay to ensure the filter is applied first
+}
+
+async function fetchAndRenderSalesTrendWithFilter(year = null, month = null) {
+  try {
+    let url = 'http://localhost:5000/api/sales/monthly-totals';
+    const params = new URLSearchParams();
+    
+    if (year) params.append('year', year);
+    if (month) params.append('month', month);
+    
+    if (params.toString()) {
+      url += '?' + params.toString();
+    }
+    
+    console.log('Fetching sales trend with filter:', { year, month, url });
+    
+    const response = await fetch(url);
+    const data = await response.json();
+    const months = data.months || [];
+    const labels = months.map(m => {
+      const [year, month] = m.month.split('-');
+      const date = new Date(year, month - 1);
+      return date.toLocaleString('default', { month: 'short', year: '2-digit' });
+    });
+    const values = months.map(m => m.total);
+    renderSalesTrend(labels, values);
+  } catch (error) {
+    console.error('Error fetching filtered sales trend data:', error);
+    renderSalesTrend([], []);
+  }
+}
+
+async function openSalesTrendReportModal() {
+  try {
+    console.log('Opening Sales Trend Report Modal...');
+    
+    // Get current filter status
+    const label = document.getElementById('salesTrendSelectedMonthLabel');
+    const currentFilter = label ? label.textContent : 'All Time';
+    
+    // Update modal title to show current filter
+    const modalTitle = document.getElementById('salesTrendReportModalLabel');
+    if (modalTitle) {
+      modalTitle.innerHTML = `<i class="fas fa-chart-line me-2 text-info"></i>Monthly Sales Summary - ${currentFilter}`;
+    }
+    
+    // Fetch monthly sales data
+    let url = 'http://localhost:5000/api/sales/monthly-totals';
+    const params = new URLSearchParams();
+    
+    // Check if we have active filters
+    const yearSelect = document.getElementById('salesTrendYearSelect');
+    const monthSelect = document.getElementById('salesTrendMonthSelect');
+    
+    if (yearSelect && yearSelect.value) {
+      params.append('year', yearSelect.value);
+    }
+    if (monthSelect && monthSelect.value) {
+      params.append('month', monthSelect.value);
+    }
+    
+    if (params.toString()) {
+      url += '?' + params.toString();
+    }
+    
+    console.log('Fetching monthly sales data for report:', url);
+    
+    const response = await fetch(url);
+    const data = await response.json();
+    const months = data.months || [];
+    
+    // Populate the table
+    const tableBody = document.getElementById('salesTrendReportTableBody');
+    if (tableBody) {
+      tableBody.innerHTML = '';
+      
+      if (months.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No data available</td></tr>';
+      } else {
+        months.forEach(monthData => {
+          const [year, month] = monthData.month.split('-');
+          const monthNames = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+          ];
+          const monthName = monthNames[parseInt(month) - 1];
+          
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>
+              <div class="d-flex px-2 py-1">
+                <div class="d-flex flex-column justify-content-center">
+                  <h6 class="mb-0 text-sm">${monthName}</h6>
+                </div>
+              </div>
+            </td>
+            <td class="align-middle text-center text-sm">
+              <span class="text-secondary text-xs font-weight-bold">${year}</span>
+            </td>
+            <td class="align-middle text-center">
+              <span class="text-secondary text-xs font-weight-bold">shs:${Number(monthData.total).toLocaleString()}</span>
+            </td>
+          `;
+          tableBody.appendChild(row);
+        });
+      }
+    }
+    
+    // Show the table section
+    const tableSection = document.getElementById('salesTrendReportTable');
+    const singleSection = document.getElementById('salesTrendReportSingle');
+    
+    if (tableSection) tableSection.style.display = 'block';
+    if (singleSection) singleSection.style.display = 'none';
+    
+    // Show the modal
+    const modal = new bootstrap.Modal(document.getElementById('salesTrendReportModal'));
+    modal.show();
+    
+  } catch (error) {
+    console.error('Error opening Sales Trend Report Modal:', error);
+    
+    // Show error in modal
+    const tableBody = document.getElementById('salesTrendReportTableBody');
+    if (tableBody) {
+      tableBody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
+    }
+    
+    // Still show the modal
+    const modal = new bootstrap.Modal(document.getElementById('salesTrendReportModal'));
+    modal.show();
+  }
+}
+
 // Main dashboard initialization
 document.addEventListener('DOMContentLoaded', async function() {
   try {
@@ -861,6 +1087,41 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (recentSalesExportBtn) {
       recentSalesExportBtn.addEventListener('click', function() {
         exportRecentSalesToPDF();
+      });
+    }
+    
+    // Sales Trend Select Month button
+    const salesTrendSelectMonthBtn = document.getElementById('salesTrendSelectMonthBtn');
+    if (salesTrendSelectMonthBtn) {
+      salesTrendSelectMonthBtn.addEventListener('click', function() {
+        openSalesTrendPeriodModal();
+      });
+    }
+    
+    // Sales Trend Period Modal Apply Filter button
+    const salesTrendApplyPeriodBtn = document.getElementById('salesTrendApplyPeriodBtn');
+    if (salesTrendApplyPeriodBtn) {
+      salesTrendApplyPeriodBtn.addEventListener('click', function() {
+        applySalesTrendPeriodFilter();
+      });
+    }
+    
+    // Sales Trend View button
+    const salesTrendViewBtn = document.getElementById('salesTrendViewBtn');
+    if (salesTrendViewBtn) {
+      salesTrendViewBtn.addEventListener('click', function() {
+        openSalesTrendReportModal();
+      });
+    }
+    
+    // Add modal cleanup event listeners
+    const salesTrendPeriodModal = document.getElementById('salesTrendPeriodModal');
+    if (salesTrendPeriodModal) {
+      salesTrendPeriodModal.addEventListener('hidden.bs.modal', function() {
+        // Ensure cleanup when modal is hidden
+        if (window.cleanupModal) {
+          window.cleanupModal('salesTrendPeriodModal');
+        }
       });
     }
     
