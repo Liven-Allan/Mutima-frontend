@@ -136,6 +136,36 @@ function renderRecentSalesTable(sales) {
   });
 }
 
+async function fetchRecentSalesWithFilter(year = null, month = null, page = 1) {
+  try {
+    // Update filter status display
+    updateRecentSalesFilterStatus(year, month);
+    
+    let url = `http://localhost:5000/api/sales/recent?page=${page}&limit=${recentSalesPageSize}`;
+    
+    // Add year and month parameters if provided
+    if (year) url += `&year=${year}`;
+    if (month) url += `&month=${month}`;
+    
+    console.log('Fetching recent sales with filter:', { year, month, page, url });
+    
+    const response = await fetch(url);
+    const data = await response.json();
+    recentSalesCache = data.sales || [];
+    recentSalesCurrentPage = page;
+    recentSalesTotalCount = data.total || 0;
+    recentSalesTotalPages = Math.ceil(recentSalesTotalCount / recentSalesPageSize) || 1;
+    showRecentSalesPage(page);
+  } catch (error) {
+    console.error('Error fetching filtered recent sales:', error);
+    recentSalesCache = [];
+    recentSalesCurrentPage = page;
+    recentSalesTotalCount = 0;
+    recentSalesTotalPages = 1;
+    showRecentSalesPage(page);
+  }
+}
+
 async function fetchRecentSales(page = 1) {
   try {
     let url = `http://localhost:5000/api/sales/recent?page=${page}&limit=${recentSalesPageSize}`;
@@ -317,6 +347,9 @@ window.fetchTopPerformingItems = async function(year = null, month = null) {
   try {
     console.log('Fetching top performing items...');
     console.log('Parameters:', { year, month });
+    
+    // Update filter status display
+    updateTopItemsFilterStatus(year, month);
     
     // Show loading indicator
     const loadingDiv = document.getElementById('topItemsLoading');
@@ -541,37 +574,172 @@ window.exportTopPerformingItems = function() {
   }
 };
 
-// Global function for testing - can be called from browser console
-window.testTopItems = async function() {
-  console.log('=== TESTING TOP ITEMS FUNCTION ===');
-  console.log('Current topItemsData:', topItemsData);
-  console.log('Calling fetchTopPerformingItems...');
-  
+// PDF Export function for Recent Sales
+async function exportRecentSalesToPDF() {
   try {
-    await fetchTopPerformingItems();
-    console.log('fetchTopPerformingItems completed');
-    console.log('Updated topItemsData:', topItemsData);
+    console.log('Exporting Recent Sales to PDF...');
     
-    // Check DOM elements
-    const tableBody = document.getElementById('topItemsTableBody');
-    const noDataDiv = document.getElementById('topItemsNoData');
-    const loadingDiv = document.getElementById('topItemsLoading');
+    // Get the export button and show loading state
+    const exportBtn = document.getElementById('recentSalesExportBtn');
+    if (exportBtn) {
+      exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Generating PDF...';
+      exportBtn.disabled = true;
+    }
     
-    console.log('DOM Elements:');
-    console.log('- tableBody:', tableBody);
-    console.log('- noDataDiv:', noDataDiv);
-    console.log('- loadingDiv:', loadingDiv);
+    // Get current date and time for filename
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+    const filename = `Recent_Sales_Report_${dateStr}_${timeStr}.pdf`;
     
-    if (tableBody) {
-      console.log('Table body innerHTML length:', tableBody.innerHTML.length);
-      console.log('Table body display style:', tableBody.style.display);
-      console.log('Table body first few characters:', tableBody.innerHTML.substring(0, 200));
+    // Check if jsPDF is available
+    if (!window.jspdf) {
+      console.error('jsPDF library not loaded');
+      throw new Error('jsPDF library not available');
+    }
+    
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Add title
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Recent Sales Report', 20, 20);
+    
+    // Add generation date
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generated on: ${now.toLocaleDateString()} at ${now.toLocaleTimeString()}`, 20, 30);
+    
+    // Add filter information if any filters are applied
+    const filterStatus = document.getElementById('recentSalesFilterStatus');
+    if (filterStatus && filterStatus.style.display !== 'none') {
+      const filterText = document.getElementById('recentSalesFilterText');
+      if (filterText) {
+        doc.text(`Filter: ${filterText.textContent}`, 20, 40);
+      }
+    } else {
+      doc.text('Filter: All Records', 20, 40);
+    }
+    
+    // Get all sales data (not just current page)
+    let allSalesData = [];
+    try {
+      // Check if we have active filters
+      const yearSelect = document.getElementById('recentSalesYearSelect');
+      const monthSelect = document.getElementById('recentSalesMonthSelect');
+      const year = yearSelect ? yearSelect.value : null;
+      const month = monthSelect ? monthSelect.value : null;
+      
+      if (year || month) {
+        // Fetch filtered data without pagination
+        const response = await fetch(`http://localhost:5000/api/sales/recent?year=${year || ''}&month=${month || ''}&limit=1000`);
+        const data = await response.json();
+        allSalesData = data.sales || [];
+      } else {
+        // Fetch all data without pagination
+        const response = await fetch('http://localhost:5000/api/sales/recent?limit=1000');
+        const data = await response.json();
+        allSalesData = data.sales || [];
+      }
+    } catch (error) {
+      console.error('Error fetching sales data for PDF:', error);
+      // Use current page data as fallback
+      allSalesData = recentSalesCache || [];
+    }
+    
+    // Prepare table data
+    const tableData = allSalesData.map((sale, index) => {
+      // Create items string like the frontend table
+      const itemsStr = (sale.items && sale.items.length)
+        ? sale.items.map(i => `${i.name}${i.quantity ? ` (${i.quantity}${i.unit ? i.unit : ''})` : ''}`).join(', ')
+        : '-';
+      
+      return [
+        index + 1,
+        sale.customerName || 'N/A',
+        itemsStr,
+        sale.date ? new Date(sale.date).toLocaleDateString() : 'N/A',
+        sale.total ? `shs:${sale.total.toLocaleString()}` : 'shs:0',
+        sale.profit ? `shs:${sale.profit.toLocaleString()}` : 'shs:0'
+      ];
+    });
+    
+    // Add table
+    if (tableData.length > 0) {
+      doc.autoTable({
+        startY: 50,
+        head: [['#', 'Customer', 'Items', 'Date', 'Total', 'Profit']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [41, 128, 185],
+          textColor: 255,
+          fontStyle: 'bold'
+        },
+        styles: {
+          fontSize: 10,
+          cellPadding: 3
+        },
+        columnStyles: {
+          0: { cellWidth: 15 }, // #
+          1: { cellWidth: 40 }, // Customer
+          2: { cellWidth: 60 }, // Items (wider for item names)
+          3: { cellWidth: 25 }, // Date
+          4: { cellWidth: 30 }, // Total
+          5: { cellWidth: 30 }  // Profit
+        }
+      });
+    } else {
+      doc.text('No sales data available', 20, 60);
+    }
+    
+    // Add summary information
+    const finalY = doc.lastAutoTable.finalY || 60;
+    doc.text(`Total Records: ${allSalesData.length}`, 20, finalY + 20);
+    
+    // Calculate totals
+    const totalRevenue = allSalesData.reduce((sum, sale) => sum + (sale.total || 0), 0);
+    const totalProfit = allSalesData.reduce((sum, sale) => sum + (sale.profit || 0), 0);
+    
+    doc.text(`Total Revenue: shs:${totalRevenue.toLocaleString()}`, 20, finalY + 30);
+    doc.text(`Total Profit: shs:${totalProfit.toLocaleString()}`, 20, finalY + 40);
+    
+    // Save the PDF
+    doc.save(filename);
+    
+    // Reset button state
+    if (exportBtn) {
+      exportBtn.innerHTML = '<i class="fas fa-file-export me-1"></i> Export';
+      exportBtn.disabled = false;
+    }
+    
+    console.log('PDF exported successfully:', filename);
+    
+    // Show success notification if available
+    if (window.showNotification) {
+      window.showNotification('PDF exported successfully!', 'success');
     }
     
   } catch (error) {
-    console.error('Error in testTopItems:', error);
+    console.error('Error generating PDF:', error);
+    
+    // Reset button state
+    const exportBtn = document.getElementById('recentSalesExportBtn');
+    if (exportBtn) {
+      exportBtn.innerHTML = '<i class="fas fa-file-export me-1"></i> Export';
+      exportBtn.disabled = false;
+    }
+    
+    // Show error notification if available
+    if (window.showNotification) {
+      window.showNotification('Error generating PDF. Please try again.', 'error');
+    }
   }
-};
+}
+
+// Make export function globally available
+window.exportRecentSalesToPDF = exportRecentSalesToPDF;
 
 // Main dashboard initialization
 document.addEventListener('DOMContentLoaded', async function() {
@@ -594,7 +762,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (recentSalesPrevPage) {
       recentSalesPrevPage.addEventListener('click', function() {
         if (recentSalesCurrentPage > 1) {
-          fetchRecentSales(recentSalesCurrentPage - 1).catch(err => console.error('Error fetching previous page:', err));
+          // Use the filtered function if we have active filters, otherwise use the regular function
+          const yearSelect = document.getElementById('recentSalesYearSelect');
+          const monthSelect = document.getElementById('recentSalesMonthSelect');
+          const year = yearSelect ? yearSelect.value : null;
+          const month = monthSelect ? monthSelect.value : null;
+          
+          if (year || month) {
+            fetchRecentSalesWithFilter(year, month, recentSalesCurrentPage - 1).catch(err => console.error('Error fetching previous page:', err));
+          } else {
+            fetchRecentSales(recentSalesCurrentPage - 1).catch(err => console.error('Error fetching previous page:', err));
+          }
         }
       });
     }
@@ -603,7 +781,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (recentSalesNextPage) {
       recentSalesNextPage.addEventListener('click', function() {
         if (recentSalesCurrentPage < recentSalesTotalPages) {
-          fetchRecentSales(recentSalesCurrentPage + 1).catch(err => console.error('Error fetching next page:', err));
+          // Use the filtered function if we have active filters, otherwise use the regular function
+          const yearSelect = document.getElementById('recentSalesYearSelect');
+          const monthSelect = document.getElementById('recentSalesMonthSelect');
+          const year = yearSelect ? yearSelect.value : null;
+          const month = monthSelect ? monthSelect.value : null;
+          
+          if (year || month) {
+            fetchRecentSalesWithFilter(year, month, recentSalesCurrentPage + 1).catch(err => console.error('Error fetching next page:', err));
+          } else {
+            fetchRecentSales(recentSalesCurrentPage + 1).catch(err => console.error('Error fetching next page:', err));
+          }
         }
       });
     }
@@ -619,19 +807,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     const topItemsSelectDateBtn = document.getElementById('topItemsSelectDateBtn');
     if (topItemsSelectDateBtn) {
       topItemsSelectDateBtn.addEventListener('click', function() {
-        // For now, just refresh with current data
-        // In the future, this could open a date picker modal
-        fetchTopPerformingItems().catch(err => console.error('Error refreshing top items:', err));
+        openTopItemsPeriodModal();
       });
     }
 
-    // Top performing items test button
-    const topItemsTestBtn = document.getElementById('topItemsTestBtn');
-    if (topItemsTestBtn) {
-      topItemsTestBtn.addEventListener('click', function() {
-        fetchTopPerformingItems().catch(err => console.error('Error testing top items:', err));
-      });
-    }
+
 
     // Top Performing Items pagination event listeners
     const topItemsPrevPage = document.getElementById('topItemsPrevPage');
@@ -651,12 +831,204 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
       });
     }
+
+    // Recent Sales Select Date button
+    const recentSalesSelectDateBtn = document.getElementById('recentSalesSelectDateBtn');
+    if (recentSalesSelectDateBtn) {
+      recentSalesSelectDateBtn.addEventListener('click', function() {
+        openRecentSalesPeriodModal();
+      });
+    }
+
+    // Top Performing Items Period Modal Apply Filter button
+    const topItemsApplyPeriodBtn = document.getElementById('topItemsApplyPeriodBtn');
+    if (topItemsApplyPeriodBtn) {
+      topItemsApplyPeriodBtn.addEventListener('click', function() {
+        applyTopItemsPeriodFilter();
+      });
+    }
+
+    // Recent Sales Period Modal Apply Filter button
+    const recentSalesApplyPeriodBtn = document.getElementById('recentSalesApplyPeriodBtn');
+    if (recentSalesApplyPeriodBtn) {
+      recentSalesApplyPeriodBtn.addEventListener('click', function() {
+        applyRecentSalesPeriodFilter();
+      });
+    }
+    
+    // Recent Sales Export button
+    const recentSalesExportBtn = document.getElementById('recentSalesExportBtn');
+    if (recentSalesExportBtn) {
+      recentSalesExportBtn.addEventListener('click', function() {
+        exportRecentSalesToPDF();
+      });
+    }
     
     console.log('Sales Manager dashboard initialized successfully');
   } catch (error) {
     console.error('Error during Sales Manager dashboard initialization:', error);
   }
 });
+
+// Recent Sales Period Selection Modal Functions
+function populateRecentSalesYearSelect() {
+  const yearSelect = document.getElementById('recentSalesYearSelect');
+  if (!yearSelect) return;
+  
+  // Clear existing options except "All Years"
+  yearSelect.innerHTML = '<option value="">All Years</option>';
+  
+  // Get current year and populate last 5 years
+  const currentYear = new Date().getFullYear();
+  for (let year = currentYear; year >= currentYear - 4; year--) {
+    const option = document.createElement('option');
+    option.value = year;
+    option.textContent = year;
+    yearSelect.appendChild(option);
+  }
+}
+
+function openRecentSalesPeriodModal() {
+  populateRecentSalesYearSelect();
+  
+  // Set current selections if any
+  const yearSelect = document.getElementById('recentSalesYearSelect');
+  const monthSelect = document.getElementById('recentSalesMonthSelect');
+  
+  if (yearSelect && monthSelect) {
+    // You can set default values here if needed
+    yearSelect.value = '';
+    monthSelect.value = '';
+  }
+}
+
+function updateRecentSalesFilterStatus(year, month) {
+  const filterStatus = document.getElementById('recentSalesFilterStatus');
+  const filterText = document.getElementById('recentSalesFilterText');
+  
+  if (!filterStatus || !filterText) return;
+  
+  if (year || month) {
+    let statusText = '';
+    if (year && month) {
+      const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June', 
+                         'July', 'August', 'September', 'October', 'November', 'December'];
+      statusText = `${monthNames[parseInt(month)]} ${year}`;
+    } else if (year) {
+      statusText = `Year ${year}`;
+    } else if (month) {
+      const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June', 
+                         'July', 'August', 'September', 'October', 'November', 'December'];
+      statusText = `${monthNames[parseInt(month)]}`;
+    }
+    filterText.textContent = statusText;
+    filterStatus.style.display = 'block';
+  } else {
+    filterStatus.style.display = 'none';
+  }
+}
+
+function applyRecentSalesPeriodFilter() {
+  const yearSelect = document.getElementById('recentSalesYearSelect');
+  const monthSelect = document.getElementById('recentSalesMonthSelect');
+  
+  if (!yearSelect || !monthSelect) return;
+  
+  const selectedYear = yearSelect.value;
+  const selectedMonth = monthSelect.value;
+  
+  console.log('Applying recent sales period filter:', { year: selectedYear, month: selectedMonth });
+  
+  // Close the modal
+  const modal = bootstrap.Modal.getInstance(document.getElementById('recentSalesPeriodModal'));
+  if (modal) {
+    modal.hide();
+  }
+  
+  // Fetch data with the selected period
+  fetchRecentSalesWithFilter(selectedYear || null, selectedMonth || null)
+    .catch(err => console.error('Error fetching filtered recent sales:', err));
+}
+
+// Top Performing Items Period Selection Modal Functions
+function populateTopItemsYearSelect() {
+  const yearSelect = document.getElementById('topItemsYearSelect');
+  if (!yearSelect) return;
+  
+  // Clear existing options except "All Years"
+  yearSelect.innerHTML = '<option value="">All Years</option>';
+  
+  // Get current year and populate last 5 years
+  const currentYear = new Date().getFullYear();
+  for (let year = currentYear; year >= currentYear - 4; year--) {
+    const option = document.createElement('option');
+    option.value = year;
+    option.textContent = year;
+    yearSelect.appendChild(option);
+  }
+}
+
+function openTopItemsPeriodModal() {
+  populateTopItemsYearSelect();
+  
+  // Set current selections if any
+  const yearSelect = document.getElementById('topItemsYearSelect');
+  const monthSelect = document.getElementById('topItemsMonthSelect');
+  
+  if (yearSelect && monthSelect) {
+    // You can set default values here if needed
+    yearSelect.value = '';
+    monthSelect.value = '';
+  }
+}
+
+function updateTopItemsFilterStatus(year, month) {
+  const filterStatus = document.getElementById('topItemsFilterStatus');
+  const filterText = document.getElementById('topItemsFilterText');
+  
+  if (!filterStatus || !filterText) return;
+  
+  if (year || month) {
+    let statusText = '';
+    if (year && month) {
+      const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June', 
+                         'July', 'August', 'September', 'October', 'November', 'December'];
+      statusText = `${monthNames[parseInt(month)]} ${year}`;
+    } else if (year) {
+      statusText = `Year ${year}`;
+    } else if (month) {
+      const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June', 
+                         'July', 'August', 'September', 'October', 'November', 'December'];
+      statusText = `${monthNames[parseInt(month)]}`;
+    }
+    filterText.textContent = statusText;
+    filterStatus.style.display = 'block';
+  } else {
+    filterStatus.style.display = 'none';
+  }
+}
+
+function applyTopItemsPeriodFilter() {
+  const yearSelect = document.getElementById('topItemsYearSelect');
+  const monthSelect = document.getElementById('topItemsMonthSelect');
+  
+  if (!yearSelect || !monthSelect) return;
+  
+  const selectedYear = yearSelect.value;
+  const selectedMonth = monthSelect.value;
+  
+  console.log('Applying period filter:', { year: selectedYear, month: selectedMonth });
+  
+  // Close the modal
+  const modal = bootstrap.Modal.getInstance(document.getElementById('topItemsPeriodModal'));
+  if (modal) {
+    modal.hide();
+  }
+  
+  // Fetch data with the selected period
+  fetchTopPerformingItems(selectedYear || null, selectedMonth || null)
+    .catch(err => console.error('Error fetching filtered top items:', err));
+}
 
 // Make pagination functions globally available for testing
 window.showTopItemsPage = showTopItemsPage;
