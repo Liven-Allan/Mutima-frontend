@@ -75,6 +75,80 @@
     width: 100%;
     table-layout: fixed;
   }
+  
+  /* Responsive table styles for Sales History, Inventory Items, and Secondary Inventory */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Ensure tables maintain proper spacing on mobile */
+  @media (max-width: 768px) {
+    .table-responsive {
+      border: 1px solid #dee2e6;
+      border-radius: 0.375rem;
+    }
+    
+    .table-responsive table {
+      margin-bottom: 0;
+      min-width: 600px; /* Ensure table doesn't get too compressed */
+    }
+    
+    /* Improve button layout on mobile for Sales History */
+    .card-body .d-flex.justify-content-end {
+      flex-direction: column;
+      align-items: stretch !important;
+    }
+    
+    .card-body .d-flex.justify-content-end .btn {
+      margin-bottom: 0.5rem;
+      width: 100%;
+    }
+    
+    /* Improve button layout for Inventory sections */
+    .card-body .row .col-6:last-child {
+      margin-top: 0.5rem;
+    }
+    
+    .card-body .row .col-6:last-child .btn {
+      margin-bottom: 0.25rem;
+      width: 100%;
+    }
+    
+    .card-body .row .col-6:last-child .input-group {
+      width: 100% !important;
+      margin-bottom: 0.5rem;
+    }
+  }
+  
+  /* For very small screens, make buttons stack vertically */
+  @media (max-width: 576px) {
+    .card-body .row .col-6:last-child {
+      text-align: left !important;
+    }
+    
+    .card-body .row .col-6:last-child .btn {
+      display: block;
+      width: 100%;
+      margin-bottom: 0.5rem;
+    }
+    
+    .card-body .row .col-6:last-child .input-group {
+      width: 100% !important;
+      margin-bottom: 0.5rem;
+    }
+    
+    /* Make pagination more mobile-friendly */
+    .d-flex.justify-content-between {
+      flex-direction: column;
+      align-items: center !important;
+    }
+    
+    .d-flex.justify-content-between .text-sm {
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+  }
   </style>
 </head>
 
@@ -211,8 +285,8 @@
               </div>
             </div>
             <div class="card-body px-0 pb-2">
-              <div class="d-flex justify-content-end align-items-center px-4 py-3">
-                <button class="btn btn-primary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#addNewSaleModal" >
+              <div class="d-flex flex-column flex-md-row justify-content-md-end align-items-stretch align-items-md-center px-4 py-3 gap-2">
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addNewSaleModal" >
                   <i class="fas fa-plus me-2"></i>Add New Sale
                 </button>
                 
@@ -268,19 +342,21 @@
             <div class="card-body">
               <!-- Action Buttons -->
               <div class="row mb-4">
-                <div class="col-6">
-                  <button class="btn bg-gradient-primary" data-bs-toggle="modal" data-bs-target="#addNewItemModal">
+                <div class="col-12 col-md-6">
+                  <button class="btn bg-gradient-primary w-100 w-md-auto" data-bs-toggle="modal" data-bs-target="#addNewItemModal">
                     <i class="fas fa-plus me-2"></i>Add New Item
                   </button>
                 </div>
-                <div class="col-6 d-flex justify-content-end">
-                  <div class="input-group input-group-outline me-3" style="width: 250px; height: 45px;">
-                    <span class="input-group-text"><i class="fas fa-search"></i></span>
-                    <input type="text" class="form-control" placeholder="Search Item">
+                <div class="col-12 col-md-6 mt-2 mt-md-0">
+                  <div class="d-flex flex-column flex-md-row gap-2">
+                    <div class="input-group input-group-outline" style="height: 45px;">
+                      <span class="input-group-text"><i class="fas fa-search"></i></span>
+                      <input type="text" class="form-control" placeholder="Search Item">
+                    </div>
+                    <button class="btn bg-gradient-secondary" id="exportInventoryBtn">
+                      <i class="fas fa-file-export me-2"></i>Export
+                    </button>
                   </div>
-                  <button class="btn bg-gradient-secondary" id="exportInventoryBtn">
-                    <i class="fas fa-file-export me-2"></i>Export
-                  </button>
                 </div>
               </div>
 
@@ -391,19 +467,21 @@
             <div class="card-body">
               <!-- Action Buttons -->
               <div class="row mb-4">
-                <div class="col-6">
-                  <button class="btn bg-gradient-primary" data-bs-toggle="modal" data-bs-target="">
+                <div class="col-12 col-md-6">
+                  <button class="btn bg-gradient-primary w-100 w-md-auto" data-bs-toggle="modal" data-bs-target="">
                     <i class="fas fa-plus me-2"></i>Track New Stock
                   </button>
                 </div>
-                <div class="col-6 d-flex justify-content-end">
-                  <div class="input-group input-group-outline me-3" style="width: 250px; height: 45px;">
-                    <span class="input-group-text"><i class="fas fa-search"></i></span>
-                    <input type="text" class="form-control" placeholder="Search Item">
+                <div class="col-12 col-md-6 mt-2 mt-md-0">
+                  <div class="d-flex flex-column flex-md-row gap-2">
+                    <div class="input-group input-group-outline" style="height: 45px;">
+                      <span class="input-group-text"><i class="fas fa-search"></i></span>
+                      <input type="text" class="form-control" placeholder="Search Item">
+                    </div>
+                    <button class="btn bg-gradient-secondary" id="exportSecondaryInventoryBtn">
+                      <i class="fas fa-file-export me-2"></i>Export
+                    </button>
                   </div>
-                  <button class="btn bg-gradient-secondary" id="exportSecondaryInventoryBtn">
-                    <i class="fas fa-file-export me-2"></i>Export
-                  </button>
                 </div>
               </div>
 
