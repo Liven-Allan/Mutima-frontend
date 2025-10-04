@@ -9,7 +9,7 @@ async function updateStockInventoryValue() {
 
   try {
     // Adjust the URL if your backend is hosted elsewhere
-    const response = await fetch('http://localhost:5000/api/stock-inventory-value');
+    const response = await fetch(API_BASE_URL + '/api/stock-inventory-value');
     if (!response.ok) throw new Error('Failed to fetch');
     const data = await response.json();
     const value = data.totalStockValue || 0;
@@ -30,7 +30,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const expensesElem = document.getElementById('todays-expenses-value');
   if (expensesElem) {
     try {
-      const response = await fetch('http://localhost:5000/api/todays-expenses');
+      const response = await fetch(API_BASE_URL + '/api/todays-expenses');
       if (!response.ok) throw new Error('Failed to fetch');
       const data = await response.json();
       const value = data.totalExpenses || 0;
@@ -48,8 +48,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   if (cashElem) {
     try {
       const [cashRes, expensesRes] = await Promise.all([
-        fetch('http://localhost:5000/api/todays-cash-available'),
-        fetch('http://localhost:5000/api/todays-expenses')
+        fetch(API_BASE_URL + '/api/todays-cash-available'),
+        fetch(API_BASE_URL + '/api/todays-expenses')
       ]);
       if (!cashRes.ok || !expensesRes.ok) throw new Error('Failed to fetch');
       const cashData = await cashRes.json();
@@ -136,8 +136,8 @@ async function fetchAndRenderInventoryDetails(dateStr) {
   if (nextBtn) nextBtn.disabled = true;
   try {
     const url = dateStr
-      ? `http://localhost:5000/api/inventory-details?date=${encodeURIComponent(dateStr)}`
-      : 'http://localhost:5000/api/inventory-details';
+      ? API_BASE_URL + `/api/inventory-details?date=${encodeURIComponent(dateStr)}`
+      : API_BASE_URL + '/api/inventory-details';
     const response = await fetch(url);
     if (!response.ok) throw new Error('Failed to fetch');
     const data = await response.json();
@@ -249,8 +249,8 @@ async function fetchAndRenderExpensesDetails(dateStr) {
   if (nextBtn) nextBtn.disabled = true;
   try {
     const url = dateStr
-      ? `http://localhost:5000/api/expenses-details?date=${encodeURIComponent(dateStr)}`
-      : 'http://localhost:5000/api/expenses-details';
+      ? API_BASE_URL + `/api/expenses-details?date=${encodeURIComponent(dateStr)}`
+      : API_BASE_URL + '/api/expenses-details';
     const response = await fetch(url);
     if (!response.ok) throw new Error('Failed to fetch');
     const data = await response.json();
@@ -370,8 +370,8 @@ async function fetchAndRenderCashAvailableDetails(dateStr) {
   if (netCashElem) netCashElem.textContent = 'shs:0.00';
   try {
     const [salesRes, expensesRes] = await Promise.all([
-      fetch(dateStr ? `http://localhost:5000/api/cash-available-details?date=${encodeURIComponent(dateStr)}` : 'http://localhost:5000/api/cash-available-details'),
-      fetch(dateStr ? `http://localhost:5000/api/expenses-details?date=${encodeURIComponent(dateStr)}` : 'http://localhost:5000/api/expenses-details')
+      fetch(dateStr ? API_BASE_URL + `/api/cash-available-details?date=${encodeURIComponent(dateStr)}` : API_BASE_URL + '/api/cash-available-details'),
+      fetch(dateStr ? API_BASE_URL + `/api/expenses-details?date=${encodeURIComponent(dateStr)}` : API_BASE_URL + '/api/expenses-details')
     ]);
     if (!salesRes.ok || !expensesRes.ok) throw new Error('Failed to fetch');
     const salesData = await salesRes.json();
@@ -430,7 +430,7 @@ let cashFlowChart = null;
 async function renderCashFlowChart() {
   const ctx = document.getElementById('cash-flow-chart').getContext('2d');
   try {
-    const response = await fetch('http://localhost:5000/api/cash-flow-overview');
+    const response = await fetch(API_BASE_URL + '/api/cash-flow-overview');
     if (!response.ok) throw new Error('Failed to fetch');
     const data = await response.json();
     const labels = data.labels || [];
@@ -492,7 +492,7 @@ async function updateFinancialReportTotalRevenue() {
   const revenueElem = document.getElementById('financial-report-total-revenue');
   if (revenueElem) {
     try {
-      const response = await fetch('http://localhost:5000/api/financial-report/total-revenue');
+      const response = await fetch(API_BASE_URL + '/api/financial-report/total-revenue');
       if (!response.ok) throw new Error('Failed to fetch');
       const data = await response.json();
       const value = data.totalRevenue || 0;
@@ -514,7 +514,7 @@ async function updateFinancialReportTotalExpenses() {
   const expensesElem = document.getElementById('financial-report-total-expenses');
   if (expensesElem) {
     try {
-      const response = await fetch('http://localhost:5000/api/financial-report/total-expenses');
+      const response = await fetch(API_BASE_URL + '/api/financial-report/total-expenses');
       if (!response.ok) throw new Error('Failed to fetch');
       const data = await response.json();
       const value = data.totalExpenses || 0;
@@ -535,7 +535,7 @@ async function updateFinancialReportNetProfit() {
   const profitElem = document.getElementById('financial-report-net-profit');
   if (profitElem) {
     try {
-      const response = await fetch('http://localhost:5000/api/financial-report/net-profit');
+      const response = await fetch(API_BASE_URL + '/api/financial-report/net-profit');
       if (!response.ok) throw new Error('Failed to fetch');
       const data = await response.json();
       const value = data.netProfit || 0;
@@ -572,9 +572,9 @@ async function updateFinancialReportCardsForMonth(monthValue) {
   try {
     const params = monthValue ? `?month=${monthValue}` : '';
     const [revenueRes, expensesRes, profitRes] = await Promise.all([
-      fetch(`http://localhost:5000/api/financial-report/total-revenue${params}`),
-      fetch(`http://localhost:5000/api/financial-report/total-expenses${params}`),
-      fetch(`http://localhost:5000/api/financial-report/net-profit${params}`)
+      fetch(API_BASE_URL + `/api/financial-report/total-revenue${params}`),
+      fetch(API_BASE_URL + `/api/financial-report/total-expenses${params}`),
+      fetch(API_BASE_URL + `/api/financial-report/net-profit${params}`)
     ]);
     const revenueData = await revenueRes.json();
     const expensesData = await expensesRes.json();
@@ -613,9 +613,9 @@ async function updateExpenseRevenuePieChart(monthValue) {
   try {
     const params = monthValue ? `?month=${monthValue}` : '';
     const [revenueRes, expensesRes, profitRes] = await Promise.all([
-      fetch(`http://localhost:5000/api/financial-report/total-revenue${params}`),
-      fetch(`http://localhost:5000/api/financial-report/total-expenses${params}`),
-      fetch(`http://localhost:5000/api/financial-report/net-profit${params}`)
+      fetch(API_BASE_URL + `/api/financial-report/total-revenue${params}`),
+      fetch(API_BASE_URL + `/api/financial-report/total-expenses${params}`),
+      fetch(API_BASE_URL + `/api/financial-report/net-profit${params}`)
     ]);
     const revenueData = await revenueRes.json();
     const expensesData = await expensesRes.json();
@@ -701,7 +701,7 @@ let profitTrendLineChart = null;
 async function renderProfitTrendLineChart() {
   const ctxLine = document.getElementById('profitTrendLineChart').getContext('2d');
   try {
-    const response = await fetch('http://localhost:5000/api/financial-report/monthly-profit-trend');
+    const response = await fetch(API_BASE_URL + '/api/financial-report/monthly-profit-trend');
     if (!response.ok) throw new Error('Failed to fetch monthly profit trend');
     const data = await response.json();
     // Sort months from most recent to oldest, then reverse for left-to-right
@@ -1036,7 +1036,7 @@ async function fetchAndRenderTransactionHistory() {
   const tbody = document.getElementById('transactionHistoryTableBody');
   tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Loading...</td></tr>';
   try {
-    let url = 'http://localhost:5000/api/sales/recent?page=1&limit=100';
+    let url = API_BASE_URL + '/api/sales/recent?page=1&limit=100';
     if (transactionHistorySelectedDate) {
       url += `&date=${transactionHistorySelectedDate}`;
     }
@@ -1070,7 +1070,7 @@ async function fetchAndRenderTotalSKUs() {
   if (!elem) return;
   elem.textContent = '...';
   try {
-    const res = await fetch('http://localhost:5000/api/items/sku-count');
+    const res = await fetch(API_BASE_URL + '/api/items/sku-count');
     const data = await res.json();
     elem.textContent = data.skuCount || 0;
   } catch (err) {
@@ -1089,7 +1089,7 @@ async function fetchAndRenderLowStockItems() {
   if (!elem) return;
   elem.textContent = '...';
   try {
-    const res = await fetch('http://localhost:5000/api/items/low-stock-count');
+    const res = await fetch(API_BASE_URL + '/api/items/low-stock-count');
     const data = await res.json();
     elem.textContent = data.lowStockCount || 0;
   } catch (err) {
@@ -1109,7 +1109,7 @@ async function fetchAndRenderRecentlyReceivedItems() {
   if (!elem) return;
   elem.textContent = '...';
   try {
-    const res = await fetch('http://localhost:5000/api/items/recently-received-count');
+    const res = await fetch(API_BASE_URL + '/api/items/recently-received-count');
     const data = await res.json();
     elem.textContent = data.recentlyReceivedCount || 0;
   } catch (err) {
@@ -1130,7 +1130,7 @@ async function fetchAndRenderStockAnalysisTable() {
   if (!tbody) return;
   tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Loading...</td></tr>';
   try {
-    const res = await fetch('http://localhost:5000/api/items/stock-table');
+    const res = await fetch(API_BASE_URL + '/api/items/stock-table');
     const data = await res.json();
     const items = data.items || [];
     tbody.innerHTML = '';
@@ -1217,7 +1217,7 @@ async function fetchAndRenderStockAnalysisTable() {
   if (!tbody) return;
   tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Loading...</td></tr>';
   try {
-    const res = await fetch('http://localhost:5000/api/items/stock-table');
+    const res = await fetch(API_BASE_URL + '/api/items/stock-table');
     const data = await res.json();
     stockAnalysisCache = data.items || [];
     stockAnalysisFilteredCache = [...stockAnalysisCache];
@@ -1304,7 +1304,7 @@ async function fetchAndRenderStockAnalysisTable() {
   if (!tbody) return;
   tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Loading...</td></tr>';
   try {
-    const res = await fetch('http://localhost:5000/api/items/stock-table');
+    const res = await fetch(API_BASE_URL + '/api/items/stock-table');
     const data = await res.json();
     stockAnalysisCache = data.items || [];
     stockAnalysisFilteredCache = [...stockAnalysisCache];
@@ -1326,7 +1326,7 @@ async function renderTopStockValueBarChart() {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   try {
-    const res = await fetch('http://localhost:5000/api/items/stock-table');
+    const res = await fetch(API_BASE_URL + '/api/items/stock-table');
     const data = await res.json();
     const items = data.items || [];
     if (!items.length) {
@@ -1412,7 +1412,7 @@ async function renderStockMovementLineChart() {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   try {
-    const res = await fetch('http://localhost:5000/api/stock/movement-trend');
+    const res = await fetch(API_BASE_URL + '/api/stock/movement-trend');
     const data = await res.json();
     const labels = data.months || [];
     const inflow = data.inflow || [];
@@ -1486,7 +1486,7 @@ async function renderCashUtilizationRatioChart() {
   const ctx = document.getElementById('cash-utilization-chart').getContext('2d');
   try {
     const month = getCashUtilizationMonthValue();
-    const res = await fetch(`http://localhost:5000/api/cash-utilization-ratio?month=${month}`);
+    const res = await fetch(API_BASE_URL + `/api/cash-utilization-ratio?month=${month}`);
     const data = await res.json();
     const { percentages } = data;
     const chartData = [percentages.stockInvestment, percentages.operationalExpenses, percentages.pendingPayments, percentages.sales];
@@ -1565,7 +1565,7 @@ window.addEventListener('DOMContentLoaded', renderCashUtilizationRatioChart);
 async function renderTopROIChart() {
   const ctx = document.getElementById('roi-chart').getContext('2d');
   try {
-    const res = await fetch('http://localhost:5000/api/items/top-roi');
+    const res = await fetch(API_BASE_URL + '/api/items/top-roi');
     const data = await res.json();
     const items = data.items || [];
     const labels = items.map(i => i.name);

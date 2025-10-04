@@ -1,7 +1,7 @@
 // Fetch and display today's sales total
 async function fetchTodaysSalesTotal() {
   try {
-    const response = await fetch('http://localhost:5000/api/sales/today-total');
+    const response = await fetch(API_BASE_URL + '/api/sales/today-total');
     const data = await response.json();
     const value = typeof data.total === 'number' ? data.total : 0;
     const element = document.getElementById('todaysSalesValue');
@@ -20,7 +20,7 @@ async function fetchTodaysSalesTotal() {
 // Fetch and display today's customer count
 async function fetchCustomersToday() {
   try {
-    const response = await fetch('http://localhost:5000/api/sales/today-customers');
+    const response = await fetch(API_BASE_URL + '/api/sales/today-customers');
     const data = await response.json();
     const value = typeof data.count === 'number' ? data.count : 0;
     const element = document.getElementById('customersTodayValue');
@@ -39,7 +39,7 @@ async function fetchCustomersToday() {
 // Fetch and display today's profits
 async function fetchTodaysProfits() {
   try {
-    const response = await fetch('http://localhost:5000/api/sales/today-profits');
+    const response = await fetch(API_BASE_URL + '/api/sales/today-profits');
     const data = await response.json();
     const value = typeof data.profit === 'number' ? data.profit : 0;
     const element = document.getElementById('todaysProfitsValue');
@@ -141,7 +141,7 @@ async function fetchRecentSalesWithFilter(year = null, month = null, page = 1) {
     // Update filter status display
     updateRecentSalesFilterStatus(year, month);
     
-    let url = `http://localhost:5000/api/sales/recent?page=${page}&limit=${recentSalesPageSize}`;
+    let url = API_BASE_URL + `/api/sales/recent?page=${page}&limit=${recentSalesPageSize}`;
     
     // Add year and month parameters if provided
     if (year) url += `&year=${year}`;
@@ -168,7 +168,7 @@ async function fetchRecentSalesWithFilter(year = null, month = null, page = 1) {
 
 async function fetchRecentSales(page = 1) {
   try {
-    let url = `http://localhost:5000/api/sales/recent?page=${page}&limit=${recentSalesPageSize}`;
+    let url = API_BASE_URL + `/api/sales/recent?page=${page}&limit=${recentSalesPageSize}`;
     const response = await fetch(url);
     const data = await response.json();
     recentSalesCache = data.sales || [];
@@ -190,7 +190,7 @@ async function fetchRecentSales(page = 1) {
 let salesBargraphChart = null;
 async function fetchAndRenderSalesBargraph(days = 7) {
   try {
-    const response = await fetch(`http://localhost:5000/api/sales/daily-totals?days=${days}`);
+    const response = await fetch(API_BASE_URL + `/api/sales/daily-totals?days=${days}`);
     const data = await response.json();
     const daysArr = data.days || [];
     // Reverse to show oldest to newest (left to right)
@@ -246,7 +246,7 @@ function renderSalesBargraph(labels, values) {
 let salesTrendChart = null;
 async function fetchAndRenderSalesTrend() {
   try {
-    const response = await fetch('http://localhost:5000/api/sales/monthly-totals');
+    const response = await fetch(API_BASE_URL + '/api/sales/monthly-totals');
     const data = await response.json();
     const months = data.months || [];
     const labels = months.map(m => {
@@ -367,7 +367,7 @@ window.fetchTopPerformingItems = async function(year = null, month = null) {
     if (tableBody) tableBody.style.display = 'none';
     
     // Build URL with optional year and month parameters
-    let url = 'http://localhost:5000/api/sales/top-items';
+    let url = API_BASE_URL + '/api/sales/top-items';
     const params = new URLSearchParams();
     if (year) params.append('year', year);
     if (month) params.append('month', month);
@@ -633,12 +633,12 @@ async function exportRecentSalesToPDF() {
       
       if (year || month) {
         // Fetch filtered data without pagination
-        const response = await fetch(`http://localhost:5000/api/sales/recent?year=${year || ''}&month=${month || ''}&limit=1000`);
+        const response = await fetch(API_BASE_URL + `/api/sales/recent?year=${year || ''}&month=${month || ''}&limit=1000`);
         const data = await response.json();
         allSalesData = data.sales || [];
       } else {
         // Fetch all data without pagination
-        const response = await fetch('http://localhost:5000/api/sales/recent?limit=1000');
+        const response = await fetch(API_BASE_URL + '/api/sales/recent?limit=1000');
         const data = await response.json();
         allSalesData = data.sales || [];
       }
@@ -837,7 +837,7 @@ function applySalesTrendPeriodFilter() {
 
 async function fetchAndRenderSalesTrendWithFilter(year = null, month = null) {
   try {
-    let url = 'http://localhost:5000/api/sales/monthly-totals';
+    let url = API_BASE_URL + '/api/sales/monthly-totals';
     const params = new URLSearchParams();
     
     if (year) params.append('year', year);
@@ -880,7 +880,7 @@ async function openSalesTrendReportModal() {
     }
     
     // Fetch monthly sales data
-    let url = 'http://localhost:5000/api/sales/monthly-totals';
+    let url = API_BASE_URL + '/api/sales/monthly-totals';
     const params = new URLSearchParams();
     
     // Check if we have active filters

@@ -3,7 +3,7 @@
       const categorySelect = document.getElementById('addItemCategory');
       async function fetchAndPopulateCategories() {
         try {
-          const response = await fetch('http://localhost:5000/api/categories');
+          const response = await fetch(API_BASE_URL + '/api/categories');
           if (!response.ok) throw new Error('Failed to fetch categories');
           const categories = await response.json();
           categorySelect.innerHTML = '<option value="">Select category...</option>';
@@ -134,7 +134,7 @@
           data.total_quantity = unitsPerPackage * initialPackages;
         }
 
-        fetch('http://localhost:5000/api/items', {
+        fetch(API_BASE_URL + '/api/items', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -303,7 +303,7 @@
       // --- FETCH AND DISPLAY ITEMS WITH PAGINATION ---
       async function fetchAndDisplayItems(itemType, tableBodyId) {
         try {
-          const response = await fetch(`http://localhost:5000/api/items?item_type=${itemType}`);
+          const response = await fetch(API_BASE_URL + '/api/items?item_type=${itemType}');
           const items = await response.json();
           if (itemType === 'weighable') {
             weighableItemsCache = items;
@@ -421,7 +421,7 @@
 
       async function fetchAndDisplayCommodityRequests() {
         try {
-          const response = await fetch('http://localhost:5000/api/commodity-requests?page=1&limit=10000');
+          const response = await fetch(API_BASE_URL + '/api/commodity-requests?page=1&limit=10000');
           const data = await response.json();
           allRequestsCache = data.requests || [];
           totalRequests = allRequestsCache.length;
@@ -443,7 +443,7 @@
       // --- REQUEST STATISTICS (STATUS SUMMARY) ---
       async function loadCommodityRequestStatusSummary() {
         try {
-          const response = await fetch('http://localhost:5000/api/commodity-requests/status-summary');
+          const response = await fetch(API_BASE_URL + '/api/commodity-requests/status-summary');
           const summary = await response.json();
           document.getElementById('total-commodity-requests').innerText = summary.total;
           document.getElementById('pending-commodity-requests').innerText = summary.pending;
@@ -461,7 +461,7 @@
       // --- TOP REQUESTED ITEMS ---
       async function loadTopRequestedItems() {
         try {
-          const response = await fetch('http://localhost:5000/api/commodity-requests/top-items');
+          const response = await fetch(API_BASE_URL + '/api/commodity-requests/top-items');
           const items = await response.json();
           const tbody = document.getElementById('topRequestedItemsTableBody');
           tbody.innerHTML = '';
@@ -494,7 +494,7 @@
         const requestId = document.getElementById('updateRequestId').value;
         const newStatus = document.getElementById('updateRequestStatus').value;
         try {
-          const response = await fetch(`http://localhost:5000/api/commodity-requests/${requestId}`, {
+          const response = await fetch(API_BASE_URL + `/api/commodity-requests/${requestId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: newStatus })
@@ -661,11 +661,11 @@
       let originalUpdateItemValues = {};
 
       function onUpdateItem(itemId) {
-        fetch(`http://localhost:5000/api/items/${itemId}`)
+        fetch(API_BASE_URL + `/api/items/${itemId}`)
           .then(response => response.json())
           .then(item => {
             document.getElementById('updateItemName').value = item.name || '';
-            fetch('http://localhost:5000/api/categories')
+            fetch(API_BASE_URL + '/api/categories')
               .then(res => res.json())
               .then(categories => {
                 const categorySelect = document.getElementById('updateItemCategory');
@@ -796,7 +796,7 @@
         // For minimum stock and expiry date, always replace
         data.minimum_stock = document.getElementById('updateItemMinStock').value;
         data.expiry_date = document.getElementById('updateItemExpiryDate').value;
-        fetch(`http://localhost:5000/api/items/${itemId}`, {
+        fetch(API_BASE_URL + `/api/items/${itemId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

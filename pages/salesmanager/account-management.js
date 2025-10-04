@@ -2,7 +2,7 @@
 window.addEventListener('DOMContentLoaded', () => {
   const totalUsersElem = document.getElementById('totalUsersCount');
   if (totalUsersElem) {
-    fetch('http://localhost:5000/api/users/count')
+    fetch(API_BASE_URL + '/api/users/count')
       .then(res => res.json())
       .then(data => {
         totalUsersElem.textContent = data.count !== undefined ? data.count.toLocaleString() : '--';
@@ -13,7 +13,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   const pendingUsersElem = document.getElementById('pendingUsersCount');
   if (pendingUsersElem) {
-    fetch('http://localhost:5000/api/users/pending-count')
+    fetch(API_BASE_URL + '/api/users/pending-count')
       .then(res => res.json())
       .then(data => {
         pendingUsersElem.textContent = data.count !== undefined ? data.count.toLocaleString() : '--';
@@ -24,7 +24,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   const rejectedUsersElem = document.getElementById('rejectedUsersCount');
   if (rejectedUsersElem) {
-    fetch('http://localhost:5000/api/users/rejected-count')
+    fetch(API_BASE_URL + '/api/users/rejected-count')
       .then(res => res.json())
       .then(data => {
         rejectedUsersElem.textContent = data.count !== undefined ? data.count.toLocaleString() : '--';
@@ -129,7 +129,7 @@ window.addEventListener('DOMContentLoaded', () => {
     updateActiveUsersPaginationControls();
   }
   function fetchAndRenderActiveUsers() {
-    fetch('http://localhost:5000/api/users/active')
+    fetch(API_BASE_URL + '/api/users/active')
       .then(res => res.json())
       .then(data => {
         activeUsersData = data.users || [];
@@ -222,7 +222,7 @@ window.addEventListener('DOMContentLoaded', () => {
       btn.addEventListener('click', function() {
         const tr = btn.closest('tr');
         const userId = tr.getAttribute('data-user-id');
-        fetch(`http://localhost:5000/api/users/${userId}/status`, {
+        fetch(API_BASE_URL + '/api/users/${userId}/status', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: 'active' })
@@ -234,7 +234,7 @@ window.addEventListener('DOMContentLoaded', () => {
       btn.addEventListener('click', function() {
         const tr = btn.closest('tr');
         const userId = tr.getAttribute('data-user-id');
-        fetch(`http://localhost:5000/api/users/${userId}/status`, {
+        fetch(API_BASE_URL + '/api/users/${userId}/status', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: 'rejected' })
@@ -247,7 +247,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
   function fetchAndRenderPendingApprovals() {
-    fetch('http://localhost:5000/api/users/pending')
+    fetch(API_BASE_URL + '/api/users/pending')
       .then(res => res.json())
       .then(data => {
         pendingApprovalsData = data.users || [];
@@ -331,7 +331,7 @@ window.addEventListener('DOMContentLoaded', () => {
     updateRejectedUsersPaginationControls();
   }
   function fetchAndRenderRejectedUsers() {
-    fetch('http://localhost:5000/api/users/rejected')
+    fetch(API_BASE_URL + '/api/users/rejected')
       .then(res => res.json())
       .then(data => {
         rejectedUsersData = data.users || [];
@@ -355,7 +355,7 @@ window.addEventListener('DOMContentLoaded', () => {
   function refreshPendingAndActiveUsers() {
     // Refresh pending users
     if (pendingApprovalsTableBody) {
-      fetch('http://localhost:5000/api/users/pending')
+      fetch(API_BASE_URL + '/api/users/pending')
         .then(res => res.json())
         .then(data => {
           const users = data.users || [];
@@ -396,7 +396,7 @@ window.addEventListener('DOMContentLoaded', () => {
             btn.addEventListener('click', function() {
               const tr = btn.closest('tr');
               const userId = tr.getAttribute('data-user-id');
-              fetch(`http://localhost:5000/api/users/${userId}/status`, {
+              fetch(API_BASE_URL + '/api/users/${userId}/status', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: 'active' })
@@ -408,7 +408,7 @@ window.addEventListener('DOMContentLoaded', () => {
             btn.addEventListener('click', function() {
               const tr = btn.closest('tr');
               const userId = tr.getAttribute('data-user-id');
-              fetch(`http://localhost:5000/api/users/${userId}/status`, {
+              fetch(API_BASE_URL + '/api/users/${userId}/status', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: 'rejected' })
@@ -430,7 +430,7 @@ window.addEventListener('DOMContentLoaded', () => {
     // Refresh counts
     const totalUsersElem = document.getElementById('totalUsersCount');
     if (totalUsersElem) {
-      fetch('http://localhost:5000/api/users/count')
+      fetch(API_BASE_URL + '/api/users/count')
         .then(res => res.json())
         .then(data => {
           totalUsersElem.textContent = data.count !== undefined ? data.count.toLocaleString() : '--';
@@ -441,7 +441,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     const pendingUsersElem = document.getElementById('pendingUsersCount');
     if (pendingUsersElem) {
-      fetch('http://localhost:5000/api/users/pending-count')
+      fetch(API_BASE_URL + '/api/users/pending-count')
         .then(res => res.json())
         .then(data => {
           pendingUsersElem.textContent = data.count !== undefined ? data.count.toLocaleString() : '--';
@@ -452,7 +452,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     const rejectedUsersElem = document.getElementById('rejectedUsersCount');
     if (rejectedUsersElem) {
-      fetch('http://localhost:5000/api/users/rejected-count')
+      fetch(API_BASE_URL + '/api/users/rejected-count')
         .then(res => res.json())
         .then(data => {
           rejectedUsersElem.textContent = data.count !== undefined ? data.count.toLocaleString() : '--';
@@ -497,7 +497,7 @@ window.addEventListener('DOMContentLoaded', () => {
         role,
         status
       };
-      fetch('http://localhost:5000/api/users', {
+      fetch(API_BASE_URL + '/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -558,7 +558,7 @@ window.addEventListener('DOMContentLoaded', () => {
     saveEditUserBtn.addEventListener('click', function() {
       if (userIdToEdit) {
         const newStatus = editUserStatus.value;
-        fetch(`http://localhost:5000/api/users/${userIdToEdit}/status`, {
+        fetch(API_BASE_URL + '/api/users/${userIdToEdit}/status', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: newStatus })
@@ -615,7 +615,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if (confirmDeleteRejectedUserBtn) {
     confirmDeleteRejectedUserBtn.addEventListener('click', function() {
       if (rejectedUserIdToDelete) {
-        fetch(`http://localhost:5000/api/users/${rejectedUserIdToDelete}`, {
+        fetch(API_BASE_URL + '/api/users/${rejectedUserIdToDelete}', {
           method: 'DELETE',
         })
           .then(res => res.json())
@@ -655,7 +655,7 @@ window.addEventListener('DOMContentLoaded', () => {
     saveEditUserBtn.addEventListener('click', function() {
       if (rejectedUserIdToEdit) {
         const newStatus = editUserStatus.value;
-        fetch(`http://localhost:5000/api/users/${rejectedUserIdToEdit}/status`, {
+        fetch(API_BASE_URL + '/api/users/${rejectedUserIdToEdit}/status', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: newStatus })

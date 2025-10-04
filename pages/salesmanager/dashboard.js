@@ -3,7 +3,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const changeElem = document.getElementById('monthlySalesCostChange');
   if (!valueElem) return;
   try {
-    const res = await fetch('http://localhost:5000/api/sales/monthly-totals');
+    const res = await fetch(API_BASE_URL + '/api/sales/monthly-totals');
     const data = await res.json();
     const months = data.months || [];
     if (!months.length) {
@@ -57,7 +57,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       const month = String(now.getMonth() + 1).padStart(2, '0');
       const currMonth = `${year}-${month}`;
       // Fetch current month cost and percent change from backend
-      const currRes = await fetch(`http://localhost:5000/api/inventory/monthly-cost?month=${currMonth}`);
+      const currRes = await fetch(API_BASE_URL + `/api/inventory/monthly-cost?month=${currMonth}`);
       const currData = await currRes.json();
       const currValue = currData.totalCost || 0;
       const percent = currData.percentChange || 0;
@@ -87,7 +87,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const creditCostElem = document.getElementById('creditCostValue');
   if (creditCostElem) {
     try {
-      const res = await fetch('http://localhost:5000/api/credit-customers/total-outstanding');
+      const res = await fetch(API_BASE_URL + '/api/credit-customers/total-outstanding');
       const data = await res.json();
       const value = data.totalOutstanding || 0;
       creditCostElem.textContent = 'shs:' + value.toLocaleString();
@@ -137,7 +137,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   async function fetchInventoryCostDetails(monthStr) {
     try {
-      const res = await fetch(`http://localhost:5000/api/inventory/monthly-cost-details?month=${monthStr}`);
+      const res = await fetch(API_BASE_URL + `/api/inventory/monthly-cost-details?month=${monthStr}`);
       const data = await res.json();
       inventoryCostDetailsData = data.details || [];
       inventoryCostCurrentPage = 1;
@@ -207,7 +207,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Sales over last 7 days bar graph
   const salesChartElem = document.getElementById('sales-chart');
   if (salesChartElem) {
-    fetch('http://localhost:5000/api/sales/daily-totals?days=7')
+    fetch(API_BASE_URL + '/api/sales/daily-totals?days=7')
       .then(res => res.json())
       .then(data => {
         const daysArr = data.days || [];
@@ -258,7 +258,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const lowStockModalTable = lowStockModal ? lowStockModal.querySelector('tbody') : null;
   const lowStockAlertBadge = document.getElementById('lowStockAlertBadge');
   if (lowStockTable) {
-    fetch('http://localhost:5000/api/items/stock-table')
+    fetch(API_BASE_URL + '/api/items/stock-table')
       .then(res => res.json())
       .then(data => {
         allLowStockItems = (data.items || []).filter(item => {
@@ -330,7 +330,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Credit Alert (Overdue payments) logic
   const creditAlertBadge = document.getElementById('creditAlertBadge');
   if (creditAlertBadge) {
-    fetch('http://localhost:5000/api/customer-credit-accounts')
+    fetch(API_BASE_URL + '/api/customer-credit-accounts')
       .then(res => res.json())
       .then(data => {
         const overdueCount = (data || []).filter(c => (c.balance || 0) > 0 && c.status === 'Overdue').length;
@@ -344,7 +344,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Requested Product (New requests) logic
   const requestedProductBadge = document.getElementById('requestedProductBadge');
   if (requestedProductBadge) {
-    fetch('http://localhost:5000/api/commodity-requests/status-summary')
+    fetch(API_BASE_URL + '/api/commodity-requests/status-summary')
       .then(res => res.json())
       .then(summary => {
         requestedProductBadge.textContent = summary.pending !== undefined ? summary.pending : '--';
@@ -397,7 +397,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 
   function fetchAndRenderExpiringProducts(months = 2) {
-    fetch(`http://localhost:5000/api/items/expiring?months=${months}`)
+    fetch(API_BASE_URL + `/api/items/expiring?months=${months}`)
       .then(res => res.json())
       .then(data => {
         expiringProductsData = data.items || [];

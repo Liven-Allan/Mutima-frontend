@@ -42,6 +42,7 @@
 </head>
 
 <body class="g-sidenav-show  bg-gray-100">
+  <script src="../assets/js/config.js"></script> 
   <script>
     // Redirect to sign-in if not authenticated
     (function() {
@@ -495,7 +496,7 @@
           }
           // Populate customer dropdown with customers who have made a commodity request
           try {
-            const res = await fetch('http://localhost:5000/api/commodity-request-customers');
+            const res = await fetch(API_BASE_URL + '/api/commodity-request-customers');
             if (res.ok) {
               const customers = await res.json();
               // Remove all options except the first (Select customer...) and last (Enter Name)
@@ -559,7 +560,7 @@
             if (customerContact) {
               try {
                 // Try to find by phone
-                const searchRes = await fetch(`http://localhost:5000/api/customers?phone=${encodeURIComponent(customerContact)}`);
+                const searchRes = await fetch(API_BASE_URL + `/api/customers?phone=${encodeURIComponent(customerContact)}`);
                 if (searchRes.ok) {
                   const customersList = await searchRes.json();
                   if (Array.isArray(customersList) && customersList.length > 0) {
@@ -576,7 +577,7 @@
             } else {
               // Create customer if not found
               try {
-                const customerRes = await fetch('http://localhost:5000/api/customers', {
+                const customerRes = await fetch(API_BASE_URL + '/api/customers', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ name: customerName, phone: customerContact })
@@ -610,7 +611,7 @@
 
           // Send to backend
           try {
-            const res = await fetch('http://localhost:5000/api/commodity-requests', {
+            const res = await fetch(API_BASE_URL + '/api/commodity-requests', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload)
@@ -640,7 +641,7 @@
     // Fetch and display paginated commodity requests
     async function loadCommodityRequests(page = 1) {
       try {
-        const res = await fetch(`http://localhost:5000/api/commodity-requests?page=${page}&limit=${requestRecordsPerPage}`);
+        const res = await fetch(API_BASE_URL + `/api/commodity-requests?page=${page}&limit=${requestRecordsPerPage}`);
         if (!res.ok) throw new Error('Failed to fetch requests');
         const data = await res.json();
         const requests = data.requests;
@@ -688,7 +689,7 @@
 
     async function loadRequestSummary() {
       try {
-        const response = await fetch('http://localhost:5000/api/commodity-requests/summary');
+        const response = await fetch(API_BASE_URL + '/api/commodity-requests/summary');
         const summary = await response.json();
         document.getElementById('total-requests').innerText = summary.total;
         document.getElementById('pending-requests').innerText = summary.pending;
@@ -713,7 +714,7 @@
     // Load all unique statuses for the dropdown
     async function loadRequestStatuses() {
       try {
-        const res = await fetch('http://localhost:5000/api/commodity-requests/statuses');
+        const res = await fetch(API_BASE_URL + '/api/commodity-requests/statuses');
         const data = await res.json();
         const statuses = data.statuses || [];
         const dropdown = document.querySelector('#statusDropdown + .dropdown-menu');
@@ -741,7 +742,7 @@
 
     // Fetch all requests for filtering
     async function fetchAllRequests() {
-      const res = await fetch('http://localhost:5000/api/commodity-requests?page=1&limit=10000');
+      const res = await fetch(API_BASE_URL + '/api/commodity-requests?page=1&limit=10000');
       const data = await res.json();
       allRequestsCache = data.requests || [];
     }
@@ -818,7 +819,7 @@
         btn.addEventListener('click', async function() {
           const id = this.getAttribute('data-id');
           // Fetch the request details using the new endpoint
-          const res = await fetch(`http://localhost:5000/api/commodity-requests/${id}`);
+          const res = await fetch(API_BASE_URL + `/api/commodity-requests/${id}`);
           let reqData = null;
           if (res.ok) {
             reqData = await res.json();
@@ -851,7 +852,7 @@
         const requested_date = document.getElementById('editRequestDate').value;
         const customer_contact = document.getElementById('editCustomerContact').value;
         try {
-          const response = await fetch(`http://localhost:5000/api/commodity-requests/${id}`, {
+          const response = await fetch(API_BASE_URL + `/api/commodity-requests/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ commodity_name, quantity, requestType, status, requested_date, customer_contact })
@@ -914,7 +915,7 @@
       document.getElementById('confirmDeleteRequestBtn').addEventListener('click', async function() {
         if (!deleteRequestId) return;
         try {
-          const response = await fetch(`http://localhost:5000/api/commodity-requests/${deleteRequestId}`, {
+          const response = await fetch(API_BASE_URL + `/api/commodity-requests/${deleteRequestId}`, {
             method: 'DELETE'
           });
           const result = await response.json();

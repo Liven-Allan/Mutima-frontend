@@ -1,7 +1,7 @@
 console.log('credit-management.js loaded');
 // Fetch and display the count of active credit customers
 function fetchActiveCreditCustomersCount() {
-  fetch('http://localhost:5000/api/credit-customers/count')
+  fetch(API_BASE_URL + '/api/credit-customers/count')
     .then(response => {
       console.log('API response status:', response.status);
       return response.json();
@@ -26,7 +26,7 @@ let cachedCreditCustomers = [];
 
 // Fetch and render credit customers in the modal
 function fetchAndRenderCreditCustomers() {
-  fetch('http://localhost:5000/api/customer-credit-accounts')
+  fetch(API_BASE_URL + '/api/customer-credit-accounts')
     .then(response => response.json())
     .then(data => {
       cachedCreditCustomers = data;
@@ -113,7 +113,7 @@ if (customerSearchInput) customerSearchInput.addEventListener('input', applyCust
 
 // Fetch and display the total outstanding amount
 function fetchTotalOutstandingAmount() {
-  fetch('http://localhost:5000/api/credit-customers/total-outstanding')
+  fetch(API_BASE_URL + '/api/credit-customers/total-outstanding')
     .then(response => response.json())
     .then(data => {
       const elem = document.getElementById('totalOutstandingAmount');
@@ -129,7 +129,7 @@ function fetchTotalOutstandingAmount() {
 
 // Fetch and render outstanding customers in the modal
 function fetchAndRenderOutstandingCustomers() {
-  fetch('http://localhost:5000/api/customer-credit-accounts')
+  fetch(API_BASE_URL + '/api/customer-credit-accounts')
     .then(response => response.json())
     .then(data => {
       const tbody = document.getElementById('outstandingCustomerList');
@@ -159,7 +159,7 @@ function fetchAndRenderOutstandingCustomers() {
 
 // Fetch and display the overdue amount
 function fetchOverdueAmount() {
-  fetch('http://localhost:5000/api/credit-customers/overdue-amount')
+  fetch(API_BASE_URL + '/api/credit-customers/overdue-amount')
     .then(response => response.json())
     .then(data => {
       const elem = document.getElementById('overdueAmount');
@@ -177,7 +177,7 @@ function fetchOverdueAmount() {
 
 // Fetch and render overdue customers in the modal
 function fetchAndRenderOverdueCustomers() {
-  fetch('http://localhost:5000/api/credit-transactions/all')
+  fetch(API_BASE_URL + '/api/credit-transactions/all')
     .then(response => response.json())
     .then(data => {
       const now = new Date();
@@ -381,7 +381,7 @@ function renderCreditTransactionsTable(data) {
   }
 }
 function fetchAndRenderCreditTransactions() {
-  fetch('http://localhost:5000/api/credit-transactions/all')
+  fetch(API_BASE_URL + '/api/credit-transactions/all')
     .then(response => response.json())
     .then(data => {
       creditTransactionsCache = data;
@@ -594,7 +594,7 @@ function renderRepaymentCalendar() {
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   // Fetch all credit transactions
-  fetch('http://localhost:5000/api/credit-transactions/all')
+  fetch(API_BASE_URL + '/api/credit-transactions/all')
     .then(res => res.json())
     .then(transactions => {
       // Render day headers
@@ -643,7 +643,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Repayment Tracking Modal Logic
 function renderRepaymentTrackingModal() {
-  fetch('http://localhost:5000/api/credit-transactions/all')
+  fetch(API_BASE_URL + '/api/credit-transactions/all')
     .then(res => res.json())
     .then(transactions => {
       const overdueTbody = document.getElementById('repaymentOverdueList');
@@ -680,7 +680,7 @@ document.getElementById('repaymentTrackingModal').addEventListener('show.bs.moda
 
 // Credit Line Graph Logic
 function fetchAndRenderCreditLineGraph() {
-  fetch('http://localhost:5000/api/credit/monthly-totals')
+  fetch(API_BASE_URL + '/api/credit/monthly-totals')
     .then(res => res.json())
     .then(data => {
       const labels = data.map(d => `${d.year}-${String(d.month).padStart(2, '0')}`);

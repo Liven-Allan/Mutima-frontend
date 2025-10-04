@@ -39,6 +39,7 @@
 </head>
 
 <body class="g-sidenav-show  bg-gray-100">
+  <script src="../assets/js/config.js"></script> 
   <script>
     // Redirect to sign-in if not authenticated
     (function() {
@@ -389,7 +390,7 @@
           const data = { date, amount, purpose };
 
           try {
-            const response = await fetch('http://localhost:5000/api/expenses', {
+            const response = await fetch(API_BASE_URL + '/api/expenses', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
@@ -441,7 +442,7 @@
     async function loadExpenses(page = 1, fetchAll = false) {
       try {
         // Always fetch all records for accurate client-side filtering and pagination
-        let url = `http://localhost:5000/api/expenses?page=1&limit=10000`;
+        let url = API_BASE_URL + `/api/expenses?page=1&limit=10000`;
         const response = await fetch(url);
         const data = await response.json();
         let expenses = data.expenses || [];
@@ -529,7 +530,7 @@
       document.getElementById('confirmDeleteExpenseBtn').addEventListener('click', async function() {
         if (!expenseIdToDelete) return;
         try {
-          const response = await fetch(`http://localhost:5000/api/expenses/${expenseIdToDelete}`, {
+          const response = await fetch(API_BASE_URL + `/api/expenses/${expenseIdToDelete}`, {
             method: 'DELETE'
           });
           const result = await response.json();
@@ -550,7 +551,7 @@
 
     async function loadExpenseSummary() {
       try {
-        const response = await fetch('http://localhost:5000/api/expenses/summary');
+        const response = await fetch(API_BASE_URL + '/api/expenses/summary');
         const summary = await response.json();
         document.getElementById('todays-expenses').innerText = `shs:${Number(summary.today).toLocaleString()}`;
         document.getElementById('weeks-expenses').innerText = `shs:${Number(summary.week).toLocaleString()}`;
@@ -565,7 +566,7 @@
 
     async function loadExpensePurposes() {
       try {
-        const response = await fetch('http://localhost:5000/api/expenses/purposes');
+        const response = await fetch(API_BASE_URL + '/api/expenses/purposes');
         const data = await response.json();
         const purposes = data.purposes || [];
         const dropdown = document.querySelector('#purposeDropdown + .dropdown-menu');
@@ -744,7 +745,7 @@
         const amount = document.getElementById('editExpenseAmount').value;
         const purpose = document.getElementById('editExpensePurpose').value;
         try {
-          const response = await fetch(`http://localhost:5000/api/expenses/${id}`, {
+          const response = await fetch(API_BASE_URL + `/api/expenses/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ amount, purpose })

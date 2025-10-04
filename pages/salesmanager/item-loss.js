@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   async function fetchAndDisplayLostItems() {
     try {
-      const response = await fetch('http://localhost:5000/api/item-losses');
+      const response = await fetch(API_BASE_URL + '/api/item-losses');
       if (!response.ok) throw new Error('Failed to fetch lost items');
       
       const data = await response.json();
@@ -234,7 +234,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   async function populateItemSelect() {
     try {
-      const response = await fetch('http://localhost:5000/api/items');
+      const response = await fetch(API_BASE_URL + '/api/items');
       if (!response.ok) throw new Error('Failed to fetch items');
       
       const items = await response.json();
@@ -311,7 +311,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Function to refresh item data and update dropdown
   async function refreshItemData() {
     try {
-      const response = await fetch('http://localhost:5000/api/items');
+      const response = await fetch(API_BASE_URL + '/api/items');
       if (!response.ok) throw new Error('Failed to fetch updated items');
       
       const items = await response.json();
@@ -593,7 +593,7 @@ document.addEventListener('DOMContentLoaded', function () {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch('http://localhost:5000/api/item-losses', {
+      const response = await fetch(API_BASE_URL + '/api/item-losses', {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(formData)
@@ -641,7 +641,7 @@ document.addEventListener('DOMContentLoaded', function () {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`http://localhost:5000/api/item-losses/${id}`, {
+      const response = await fetch(API_BASE_URL + `/api/item-losses/${id}`, {
         method: 'DELETE',
         headers: headers,
       });

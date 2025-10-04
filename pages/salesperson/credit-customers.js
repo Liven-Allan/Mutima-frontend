@@ -24,7 +24,7 @@ async function loadCreditCustomers() {
     try {
         console.log('Loading credit customers...');
         
-        const response = await fetch('http://localhost:5000/api/customer-credit-accounts');
+        const response = await fetch(API_BASE_URL + '/api/customer-credit-accounts');
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -294,9 +294,9 @@ async function addCreditCustomer() {
         };
         
         console.log('Customer data to send:', customerData);
-        console.log('Making API call to: http://localhost:5000/api/customers');
+        console.log('Making API call to: API_BASE_URL + /api/customers');
         
-        const response = await fetch('http://localhost:5000/api/customers', {
+        const response = await fetch(API_BASE_URL + '/api/customers', {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
@@ -385,7 +385,7 @@ async function deleteCustomer(customerId, customerName) {
     console.log('Deleting customer:', customerName, 'with ID:', customerId);
     
     try {
-        const response = await fetch(`http://localhost:5000/api/customers/${customerId}`, {
+        const response = await fetch(API_BASE_URL + `/api/customers/${customerId}`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' }
         });

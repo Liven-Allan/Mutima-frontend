@@ -340,7 +340,7 @@
       };
 
       try {
-        const response = await fetch('http://localhost:5000/api/sales', {
+        const response = await fetch(API_BASE_URL + '/api/sales', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(saleData)
@@ -362,7 +362,7 @@
           agreed_repayment_date: saleData.credit.agreed_repayment_date,
           remarks: saleData.credit.remarks
         };
-        const creditRes = await fetch('http://localhost:5000/api/credit-transactions', {
+        const creditRes = await fetch(API_BASE_URL + '/api/credit-transactions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(creditTransactionData)
@@ -471,7 +471,7 @@
     async function fetchCreditCustomers(searchTerm = '') {
       customerDropdownLoading = true;
       try {
-        let url = 'http://localhost:5000/api/customers-with-credit';
+        let url = API_BASE_URL + '/api/customers-with-credit';
         if (searchTerm) {
           url += `?search=${encodeURIComponent(searchTerm)}`;
         }
@@ -533,7 +533,7 @@
         document.getElementById('paymentCustomerName').textContent = 'Loading...';
         document.getElementById('paymentCustomerContact').textContent = 'Loading...';
         // Fetch customer credit details from backend
-        const response = await fetch(`http://localhost:5000/api/customer-credit-details/${customer._id}`);
+        const response = await fetch(API_BASE_URL + `/api/customer-credit-details/${customer._id}`);
         if (!response.ok) throw new Error('Failed to fetch customer credit details');
         customerCreditDetails = await response.json();
         selectedPaymentCustomer = customer;
@@ -702,7 +702,7 @@
         console.log('Recording payment:', paymentData);
         
         // Send to backend
-        const response = await fetch('http://localhost:5000/api/repayments', {
+        const response = await fetch(API_BASE_URL + '/api/repayments', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -743,7 +743,7 @@
     // Load payment methods from backend
     async function loadPaymentMethods() {
       try {
-        const response = await fetch('http://localhost:5000/api/payment-methods');
+        const response = await fetch(API_BASE_URL + '/api/payment-methods');
         paymentMethods = await response.json();
         populatePaymentMethods();
         console.log('Payment methods loaded:', paymentMethods);
@@ -943,7 +943,7 @@
       // Remove all except the first two options
       while (select.options.length > 2) select.remove(2);
       try {
-        const res = await fetch('http://localhost:5000/api/customers');
+        const res = await fetch(API_BASE_URL + '/api/customers');
         const customers = await res.json();
         customers.forEach(c => {
           const opt = document.createElement('option');
@@ -981,7 +981,7 @@
     async function loadCreditAccounts() {
       try {
         console.log('Fetching credit accounts...');
-        const response = await fetch('http://localhost:5000/api/customer-credit-accounts');
+        const response = await fetch(API_BASE_URL + '/api/customer-credit-accounts');
         console.log('Response status:', response.status);
         const responseText = await response.text();
         console.log('Response text:', responseText);
@@ -1145,7 +1145,7 @@
     async function debugCreditTransactions() {
       try {
         console.log('Calling debug endpoint...');
-        const response = await fetch('http://localhost:5000/api/debug/credit-transactions');
+        const response = await fetch(API_BASE_URL + '/api/debug/credit-transactions');
         const data = await response.json();
         
         console.log('Debug endpoint response:', data);
@@ -1206,7 +1206,7 @@ async function loadCreditCustomersPayment() {
       }
       
       try {
-        const res = await fetch('http://localhost:5000/api/customers-with-credit');
+        const res = await fetch(API_BASE_URL + '/api/customers-with-credit');
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
         }
@@ -1260,7 +1260,7 @@ document.getElementById('creditCustomerTypePayment').addEventListener('change', 
         return;
       }
       try {
-        const response = await fetch(`http://localhost:5000/api/customer-credit-details/${customerId}`);
+        const response = await fetch(API_BASE_URL + `/api/customer-credit-details/${customerId}`);
         if (!response.ok) throw new Error('Failed to fetch customer credit details');
         const data = await response.json();
         // Calculate total order balance as sum of all amount_due
@@ -1324,7 +1324,7 @@ document.getElementById('creditCustomerTypePayment').addEventListener('change', 
 let creditItems = [];
     async function loadCreditItems() {
       try {
-        const response = await fetch('http://localhost:5000/api/items');
+        const response = await fetch(API_BASE_URL + '/api/items');
         creditItems = await response.json();
         console.log('Credit items loaded:', creditItems);
       } catch (error) {
@@ -1410,7 +1410,7 @@ async function loadViewAccountCustomers() {
       // Remove all except the first option
       while (select.options.length > 1) select.remove(1);
       try {
-        const res = await fetch('http://localhost:5000/api/customers-with-credit');
+        const res = await fetch(API_BASE_URL + '/api/customers-with-credit');
         const customers = await res.json();
         customers.forEach(c => {
           const opt = document.createElement('option');
@@ -1434,7 +1434,7 @@ async function loadViewAccountCustomers() {
       if (!customerId) return;
       try {
         // Fetch customer credit account summary
-        const res = await fetch('http://localhost:5000/api/customer-credit-accounts');
+        const res = await fetch(API_BASE_URL + '/api/customer-credit-accounts');
         const accounts = await res.json();
         const account = accounts.find(acc => acc.customer_id === customerId);
         if (account) {
@@ -1450,7 +1450,7 @@ async function loadViewAccountCustomers() {
           }
         }
         // Fetch credit transactions for this customer
-        const txRes = await fetch(`http://localhost:5000/api/credit-transactions?customer_id=${customerId}`);
+        const txRes = await fetch(API_BASE_URL + `/api/credit-transactions?customer_id=${customerId}`);
         const transactions = await txRes.json();
         // Populate transaction history table
         if (txTbody && Array.isArray(transactions)) {
@@ -1581,7 +1581,7 @@ async function recalculateCustomerBalances() {
   try {
     console.log('Starting customer balance recalculation...');
     
-    const response = await fetch('http://localhost:5000/api/recalculate-customer-balances', {
+    const response = await fetch(API_BASE_URL + '/api/recalculate-customer-balances', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

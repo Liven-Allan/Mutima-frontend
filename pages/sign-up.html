@@ -89,6 +89,7 @@
     <!-- -------- END FOOTER 3 w/ COMPANY DESCRIPTION WITH LINKS & SOCIAL ICONS & COPYRIGHT ------- -->
   </main>
   <!--   Core JS Files   -->
+  <script src="../assets/js/config.js"></script> 
   <script src="../assets/js/core/popper.min.js"></script>
   <script src="../assets/js/core/bootstrap.min.js"></script>
   <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
@@ -118,7 +119,7 @@
     const password = e.target.password.value;
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/signup', {
+      const response = await fetch(API_BASE_URL + '/api/auth/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
