@@ -1,7 +1,7 @@
 // D:\Mutima\Application\frontend\assets\js\config.js
 
 // Define the production API base URL
-const PRODUCTION_API_BASE_URL = 'https://mutima-api.com'; // <-- REPLACE with your actual deployed backend URL
+const PRODUCTION_API_BASE_URL = 'https://mutima-api.onrender.com'; // <-- REPLACE with your actual deployed backend URL
 
 // Check the current host to determine the environment
 const CURRENT_HOST = window.location.hostname;
