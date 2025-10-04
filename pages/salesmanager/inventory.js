@@ -303,7 +303,7 @@
       // --- FETCH AND DISPLAY ITEMS WITH PAGINATION ---
       async function fetchAndDisplayItems(itemType, tableBodyId) {
         try {
-          const response = await fetch(API_BASE_URL + '/api/items?item_type=${itemType}');
+          const response = await fetch(`${API_BASE_URL}/api/items?item_type=${itemType}`);
           const items = await response.json();
           if (itemType === 'weighable') {
             weighableItemsCache = items;
